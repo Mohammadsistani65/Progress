@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>داشبورد پیشرفت اعضا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Supabase JS client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+  :root{
+    --navy:#1F3B57;
+    --navy-2:#2C557E;
+    --gold:#C79A3D;
+    --gold-light:#F4E7C9;
+    --cream:#FAF7F0;
+    --line:#E3DCC9;
+    --ink:#2A2A28;
+    --muted:#7A7568;
+    --danger:#B4483A;
+    --ok:#4C7A4E;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Vazirmatn', Tahoma, sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .credit{
+    position:fixed;
+    top:10px;
+    left:14px;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.3px;
+    z-index:50;
+    background:rgba(250,247,240,.9);
+    padding:4px 10px;
+    border-radius:20px;
+    border:1px solid var(--line);
+  }
+  header.top{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#fff;
+    padding:28px 20px 60px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(199,154,61,.06) 0 2px, transparent 2px 22px);
+    pointer-events:none;
+  }
+  .top-inner{max-width:1100px;margin:0 auto;position:relative;}
+  header.top h1{
+    font-size:clamp(22px,4vw,32px);
+    margin:6px 0 4px;
+    font-weight:800;
+  }
+  header.top p{
+    margin:0;
+    color:#D9E3EE;
+    font-size:14px;
+    max-width:640px;
+    line-height:1.9;
+  }
+  .sync-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;color:#D9E3EE;margin-top:10px;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:#8FD19E;display:inline-block;}
+  .dot.off{background:#E0A0A0;}
+  .dot.loading{background:#E0C77A;}
+
+  .org-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.12);
+    padding:6px 14px;border-radius:20px;
+    font-size:12.5px;color:#F4E7C9;margin-top:12px;
+  }
+  .org-badge button{
+    background:rgba(255,255,255,.15);color:#fff;border:none;
+    padding:3px 10px;border-radius:14px;font-size:11px;cursor:pointer;font-weight:600;
+  }
+  .org-badge button:hover{background:rgba(255,255,255,.25);}
+
+  .wrap{
+    max-width:1100px;
+    margin:-38px auto 60px;
+    padding:0 16px;
+    position:relative;
+  }
+  .card{
+    background:#fff;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    box-shadow:0 6px 24px rgba(31,59,87,.07);
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-size:17px;
+    margin:0 0 14px;
+    color:var(--navy);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    color:var(--gold);
+    background:var(--gold-light);
+    padding:3px 10px;
+    border-radius:20px;
+    margin-bottom:8px;
+  }
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  label{
+    display:block;
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:5px;
+    font-weight:600;
+  }
+  input[type=text], select{
+    font-family:inherit;
+    padding:9px 12px;
+    border-radius:9px;
+    border:1px solid var(--line);
+    background:#FCFBF7;
+    font-size:14px;
+    color:var(--ink);
+    min-width:150px;
+  }
+  input[type=text]:focus, select:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+    border-radius:9px;
+    padding:9px 16px;
+    font-size:13.5px;
+    font-weight:700;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button:active{transform:scale(.97);}
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-2);}
+  .btn-gold{background:var(--gold);color:#fff;}
+  .btn-gold:hover{opacity:.9;}
+  .btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--line);}
+  .btn-ghost:hover{background:#F3F0E7;}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid #EAD6D2;font-weight:600;font-size:12px;padding:5px 10px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{
+    text-align:right;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+    padding:8px 10px;
+    border-bottom:2px solid var(--line);
+    white-space:nowrap;
+  }
+  td{padding:9px 10px;border-bottom:1px solid #F0ECE1;vertical-align:middle;}
+  tr:hover td{background:#FBF9F3;}
+  .member-name{font-weight:700;color:var(--ink);}
+  .tag{
+    display:inline-block;
+    font-size:11px;
+    padding:2px 9px;
+    border-radius:20px;
+    background:#EEF3F8;
+    color:var(--navy-2);
+    font-weight:600;
+  }
+  .tag.new{background:var(--gold-light);color:#8A6A1F;}
+  .progress-bar-outer{
+    background:#EDE8DA;
+    border-radius:20px;
+    height:9px;
+    width:100px;
+    overflow:hidden;
+    display:inline-block;
+    vertical-align:middle;
+  }
+  .progress-bar-inner{
+    height:100%;
+    background:linear-gradient(90deg,var(--gold),#DDB25E);
+    border-radius:20px;
+  }
+  .progress-pct{font-size:12px;color:var(--muted);margin-right:6px;}
+  .open-btn{background:none;border:none;color:var(--navy-2);font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;padding:0;}
+
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:34px 10px;
+    font-size:14px;
+  }
+
+  /* Onboarding gate */
+  .gate-overlay{
+    position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:200;
+  }
+  .gate-card{
+    background:#fff;border-radius:18px;max-width:440px;width:100%;padding:28px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+  }
+  .gate-card h2{color:var(--navy);font-size:19px;margin:0 0 6px;}
+  .gate-card p{color:var(--muted);font-size:13px;line-height:1.9;margin:0 0 20px;}
+  .gate-tabs{display:flex;gap:8px;margin-bottom:18px;background:#F3F0E7;padding:4px;border-radius:12px;}
+  .gate-tab{
+    flex:1;text-align:center;padding:8px;border-radius:9px;font-size:13px;font-weight:700;
+    cursor:pointer;color:var(--muted);
+  }
+  .gate-tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.08);}
+  .gate-panel{display:none;}
+  .gate-panel.active{display:block;}
+  .gate-card input[type=text]{width:100%;margin-bottom:12px;font-size:15px;padding:11px 14px;}
+  .gate-code-display{
+    background:var(--gold-light);border:1px dashed var(--gold);border-radius:10px;
+    padding:14px;text-align:center;margin-bottom:16px;
+  }
+  .gate-code-display .code{font-size:24px;font-weight:800;color:#8A6A1F;letter-spacing:2px;margin-top:4px;}
+  .gate-hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.8;}
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,25,20,.45);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:30px 14px;overflow-y:auto;z-index:100;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff;border-radius:16px;max-width:820px;width:100%;
+    padding:24px;position:relative;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal-close{
+    position:absolute;top:16px;left:16px;
+    background:#F3F0E7;border:none;border-radius:50%;
+    width:30px;height:30px;font-size:16px;cursor:pointer;color:var(--muted);
+  }
+  .modal h3{margin:0 0 4px;color:var(--navy);font-size:19px;}
+  .modal .sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+
+  .weeks-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .week-chip{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 10px;
+    font-size:12px;
+    cursor:pointer;
+    background:#FCFBF7;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    user-select:none;
+  }
+  .week-chip.done{background:#EEF6EE;border-color:#CFE6CF;}
+  .week-chip .wk-num{font-weight:700;color:var(--navy);font-size:12.5px;}
+  .week-chip .wk-skill{color:var(--muted);font-size:11px;}
+  .week-chip .wk-check{font-size:14px;}
+  .week-chip.done .wk-check::before{content:"✔ انجام شد";color:var(--ok);font-weight:700;font-size:11px;}
+  .week-chip:not(.done) .wk-check::before{content:"○ انجام نشده";color:var(--muted);font-size:11px;}
+
+  .score-block{margin-bottom:18px;}
+  .score-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .score-tab{
+    border:1px solid var(--line);background:#FCFBF7;
+    padding:6px 14px;border-radius:20px;font-size:12.5px;cursor:pointer;font-weight:600;color:var(--muted);
+  }
+  .score-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .score-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+  .score-row{display:flex;align-items:center;gap:10px;justify-content:space-between;}
+  .score-row .skill-name{font-size:13.5px;font-weight:600;min-width:100px;}
+  .score-row input[type=range]{flex:1;accent-color:var(--gold);}
+  .score-row .val{min-width:26px;text-align:center;font-weight:700;color:var(--navy);font-size:13.5px;}
+
+  /* Reports */
+  .report-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+  .report-table-wrap{overflow-x:auto;}
+  .report-header{display:none;}
+
+  footer.foot{
+    text-align:center;color:var(--muted);font-size:12px;padding:20px;
+  }
+
+  @media print{
+    .credit{position:static;background:none;border:none;text-align:left;margin-bottom:6px;}
+    header.top, .no-print, nav, .card.controls-card{display:none !important;}
+    body{background:#fff;}
+    .wrap{margin-top:0;}
+    .report-header{display:block;margin-bottom:14px;}
+    .report-header h2{color:var(--navy);margin:0 0 2px;font-size:20px;}
+    .report-header .meta{font-size:12px;color:var(--muted);}
+    .card{box-shadow:none;border:1px solid #ccc;}
+    table{font-size:12px;}
+  }
+
+  @media (max-width:640px){
+    .row{flex-direction:column;align-items:stretch;}
+    input[type=text], select{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="credit">طراح: محمد سیستانی</div>
+
+<!-- Onboarding / org-code gate -->
+<div class="gate-overlay" id="gateOverlay">
+  <div class="gate-card">
+    <h2>به داشبورد پیشرفت اعضا خوش اومدی</h2>
+    <p>این برنامه بین همهٔ لیدرها مشترکه، ولی داده‌های هر سازمان جدا و خصوصیه. برای شروع، سازمان خودت رو بساز یا اگه از قبل کد داری، وارد شو.</p>
+    <div class="gate-tabs">
+      <div class="gate-tab active" onclick="switchGateTab('new')" id="tabNew">ساخت سازمان جدید</div>
+      <div class="gate-tab" onclick="switchGateTab('join')" id="tabJoin">پیوستن با کد</div>
+    </div>
+
+    <div class="gate-panel active" id="panelNew">
+      <label>نام سازمان یا شهر</label>
+      <input type="text" id="newOrgName" placeholder="مثلاً: تیم اصفهان" />
+      <button class="btn-primary" style="width:100%;" onclick="createOrg()">ساخت سازمان و شروع</button>
+      <div class="gate-hint">یک کد اختصاصی برات ساخته میشه. این کد رو با هم‌تیمی‌ها یا کمک‌لیدرهای خودت به اشتراک بذار تا اونها هم به همین سازمان وصل بشن.</div>
+    </div>
+
+    <div class="gate-panel" id="panelJoin">
+      <label>کد سازمان</label>
+      <input type="text" id="joinOrgCode" placeholder="مثلاً: ESF-4821" style="text-transform:uppercase;" />
+      <button class="btn-gold" style="width:100%;" onclick="joinOrg()">ورود به سازمان</button>
+      <div class="gate-hint">این کد رو باید از لیدری که سازمان رو ساخته بگیری.</div>
+    </div>
+  </div>
+</div>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow" style="background:rgba(255,255,255,.15);color:#F4E7C9;">برنامهٔ فصلی ارتقای مهارت</span>
+    <h1>داشبورد پیشرفت اعضا</h1>
+    <p>ثبت و پیگیری پیشرفت اعضای سازمان شما در پنج مهارت دعوت، ارتباط‌سازی، فروش، پیگیری و رشد شخصیتی.</p>
+    <div class="sync-badge"><span class="dot loading" id="syncDot"></span><span id="syncText">در حال اتصال...</span></div>
+    <div class="org-badge" id="orgBadge" style="display:none;">
+      <span id="orgNameLabel"></span>
+      <span style="opacity:.6;">کد: <b id="orgCodeLabel"></b></span>
+      <button onclick="leaveOrg()">تغییر سازمان</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="card no-print" id="noticeCard" style="border-color:var(--gold-light);background:#FFFDF7;">
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+      ⚠️ اعضایی که اینجا اضافه می‌کنی فقط برای کسانی قابل مشاهده‌ست که همین کد سازمان رو داشته باشن. اگه می‌خوای کمک‌لیدرهای خودت هم همین اطلاعات رو ببینن، کد سازمانت (بالای صفحه) رو به اونها بده.
+    </div>
+  </div>
+
+  <div class="card controls-card no-print">
+    <span class="eyebrow">افزودن عضو جدید</span>
+    <h2>ثبت عضو در برنامه</h2>
+    <div class="row">
+      <div>
+        <label>نام عضو</label>
+        <input type="text" id="inName" placeholder="مثلاً: زهرا احمدی" />
+      </div>
+      <div>
+        <label>نام لیدر مستقیم</label>
+        <input type="text" id="inLeader" placeholder="مثلاً: محمد سیستانی" />
+      </div>
+      <div>
+        <label>سطح عضو</label>
+        <select id="inType">
+          <option value="تازه‌وارد">تازه‌وارد</option>
+          <option value="باتجربه">باتجربه</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="addMember()" id="addBtn">افزودن عضو</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="eyebrow">فهرست اعضا</span>
+    <h2>پیشرفت اعضا <span id="memberCount" style="color:var(--muted);font-weight:400;font-size:13px;"></span></h2>
+    <div class="row no-print" style="margin-bottom:14px;">
+      <div>
+        <label>فیلتر بر اساس لیدر مستقیم</label>
+        <select id="leaderFilter" onchange="renderMembers()">
+          <option value="all">همه</option>
+        </select>
+      </div>
+      <div>
+        <label>مرتب‌سازی</label>
+        <select id="sortBy" onchange="renderMembers()">
+          <option value="progress">بیشترین پیشرفت</option>
+          <option value="name">نام (الفبا)</option>
+          <option value="leader">لیدر</option>
+        </select>
+      </div>
+    </div>
+    <div class="report-table-wrap">
+      <table id="memberTable">
+        <thead>
+          <tr>
+            <th>نام</th>
+            <th>لیدر</th>
+            <th>سطح</th>
+            <th>پیشرفت هفته‌ها (از ۱۲)</th>
+            <th class="no-print"></th>
+          </tr>
+        </thead>
+        <tbody id="memberTbody"></tbody>
+      </table>
+      <div class="empty" id="emptyState" style="display:none;">هنوز عضوی ثبت نشده — از فرم بالا اولین عضو را اضافه کنید.</div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <span class="eyebrow">خروجی گزارش</span>
+    <h2>گزارش هفتگی و ماهانه</h2>
+    <div class="report-controls">
+      <div>
+        <label>نوع گزارش</label>
+        <select id="reportType" onchange="toggleReportInputs()">
+          <option value="weekly">گزارش هفتگی</option>
+          <option value="monthly">گزارش ماهانه</option>
+        </select>
+      </div>
+      <div id="weekPickerWrap">
+        <label>هفته</label>
+        <select id="weekPicker">
+          <option value="1">هفتهٔ ۱</option>
+          <option value="2">هفتهٔ ۲</option>
+          <option value="3">هفتهٔ ۳</option>
+          <option value="4">هفتهٔ ۴</option>
+          <option value="5">هفتهٔ ۵</option>
+          <option value="6">هفتهٔ ۶</option>
+          <option value="7">هفتهٔ ۷</option>
+          <option value="8">هفتهٔ ۸</option>
+          <option value="9">هفتهٔ ۹</option>
+          <option value="10">هفتهٔ ۱۰</option>
+          <option value="11">هفتهٔ ۱۱</option>
+          <option value="12">هفتهٔ ۱۲</option>
+        </select>
+      </div>
+      <div id="monthPickerWrap" style="display:none;">
+        <label>ماه</label>
+        <select id="monthPicker">
+          <option value="1">ماه اول (هفته‌های ۱ تا ۴)</option>
+          <option value="2">ماه دوم (هفته‌های ۵ تا ۸)</option>
+          <option value="3">ماه سوم (هفته‌های ۹ تا ۱۲)</option>
+        </select>
+      </div>
+      <div>
+        <label>لیدر</label>
+        <select id="reportLeaderFilter">
+          <option value="all">همه</option>
+        </select>
+      </div>
+      <button class="btn-gold" onclick="buildReport()">ساخت گزارش</button>
+      <button class="btn-ghost" onclick="window.print()">🖨️ چاپ / خروجی PDF</button>
+    </div>
+  </div>
+
+  <div class="card" id="reportCard" style="display:none;">
+    <div class="report-header">
+      <h2 id="reportTitle"></h2>
+      <div class="meta" id="reportMeta"></div>
+    </div>
+    <h2 class="no-print" id="reportTitleScreen"></h2>
+    <div class="report-table-wrap">
+      <table id="reportTable">
+        <thead id="reportThead"></thead>
+        <tbody id="reportTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer class="foot no-print">داشبورد پیشرفت اعضا — برنامهٔ فصلی ارتقای مهارت‌های نتورکری</footer>
+
+<!-- Member detail modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modalName"></h3>
+    <div class="sub" id="modalSub"></div>
+
+    <div class="score-block">
+      <strong style="font-size:14px;color:var(--navy);">خودارزیابی مهارت‌ها (۱ تا ۱۰)</strong>
+      <div class="score-tabs" id="scoreTabs"></div>
+      <div class="score-grid" id="scoreGrid"></div>
+    </div>
+
+    <strong style="font-size:14px;color:var(--navy);">پیشرفت هفتگی (۱۲ هفته)</strong>
+    <div class="weeks-grid" id="weeksGrid"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+      <button class="btn-danger" onclick="deleteMember()">حذف این عضو</button>
+      <button class="btn-primary" onclick="closeModal()">بستن</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   پیکربندی Supabase
+   ============================================================ */
+const SUPABASE_URL = "https://zbwywbzefebywrycfnhm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Ex0JEqp0gkvCW3oST84PBg_FExBZiyt";
+const TABLE_NAME = "members";
+/* ============================================================ */
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const SKILLS = ["دعوت","ارتباط‌سازی","فروش","پیگیری","رشد شخصیتی"];
+const WEEK_SKILL = {
+  1:"افتتاحیه", 2:"دعوت", 3:"دعوت", 4:"ارتباط‌سازی", 5:"ارتباط‌سازی",
+  6:"فروش", 7:"فروش", 8:"پیگیری", 9:"پیگیری", 10:"رشد شخصیتی", 11:"رشد شخصیتی", 12:"اختتامیه"
+};
+const CHECKPOINTS = [
+  {key:"week1", label:"هفتهٔ ۱"},
+  {key:"week6", label:"هفتهٔ ۶"},
+  {key:"week12", label:"هفتهٔ ۱۲"},
+];
+const ORG_STORAGE_KEY = "network_progress_org";
+
+let members = [];
+let currentModalId = null;
+let currentScoreTab = "week1";
+let currentOrgCode = null;
+let currentOrgName = null;
+let realtimeChannel = null;
+
+function toFa(n){
+  const map = {0:"۰",1:"۱",2:"۲",3:"۳",4:"۴",5:"۵",6:"۶",7:"۷",8:"۸",9:"۹"};
+  return String(n).split("").map(c=>map[c]!==undefined?map[c]:c).join("");
+}
+
+function uid(){ return 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+function genOrgCode(name){
+  const prefix = (name||"ORG").replace(/[^a-zA-Zا-ی]/g,'').slice(0,3).toUpperCase() || "ORG";
+  const num = Math.floor(1000 + Math.random()*9000);
+  return prefix + "-" + num;
+}
+
+/* ---------- Org gate ---------- */
+function switchGateTab(which){
+  document.getElementById('tabNew').classList.toggle('active', which==='new');
+  document.getElementById('tabJoin').classList.toggle('active', which==='join');
+  document.getElementById('panelNew').classList.toggle('active', which==='new');
+  document.getElementById('panelJoin').classList.toggle('active', which==='join');
+}
+
+function createOrg(){
+  const name = document.getElementById('newOrgName').value.trim();
+  if(!name){ alert('لطفاً نام سازمان یا شهر رو وارد کن.'); return; }
+  const code = genOrgCode(name);
+  setOrg(code, name, true);
+}
+
+function joinOrg(){
+  const code = document.getElementById('joinOrgCode').value.trim().toUpperCase();
+  if(!code){ alert('لطفاً کد سازمان رو وارد کن.'); return; }
+  setOrg(code, null, false);
+}
+
+function setOrg(code, name, justCreated){
+  currentOrgCode = code;
+  currentOrgName = name;
+  localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify({code, name}));
+  document.getElementById('gateOverlay').style.display = 'none';
+  document.getElementById('orgBadge').style.display = 'inline-flex';
+  document.getElementById('orgCodeLabel').textContent = code;
+  document.getElementById('orgNameLabel').textContent = name ? name : 'سازمان شما';
+  if(justCreated){
+    alert('سازمان ساخته شد!\nکد سازمان شما: ' + code + '\n\nاین کد رو یادداشت کن و با هم‌تیمی‌هات به اشتراک بذار.');
+  }
+  initApp();
+}
+
+function leaveOrg(){
+  if(!confirm('با تغییر سازمان، از این سازمان خارج میشی (اطلاعاتش پاک نمیشه، فقط دیگه نمی‌بینیش مگر با کد دوباره وارد بشی). ادامه بدم؟')) return;
+  localStorage.removeItem(ORG_STORAGE_KEY);
+  if(realtimeChannel){ sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+  members = [];
+  document.getElementById('orgBadge').style.display = 'none';
+  document.getElementById('gateOverlay').style.display = 'flex';
+}
+
+function checkExistingOrg(){
+  try{
+    const raw = localStorage.getItem(ORG_STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && parsed.code){
+        setOrg(parsed.code, parsed.name, false);
+        return;
+      }
+    }
+  }catch(e){}
+  document.getElementById('gateOverlay').style.display = 'flex';
+}
+
+/* ---------- Data model ---------- */
+function blankMember(name, leader, type){
+  const weeks = {};
+  for(let i=1;i<=12;i++) weeks[i]=false;
+  const scores = {};
+  CHECKPOINTS.forEach(cp=>{
+    scores[cp.key] = {};
+    SKILLS.forEach(s=> scores[cp.key][s] = 0);
+  });
+  return { id: uid(), name, leader, type, weeks, scores, org_code: currentOrgCode };
+}
+
+function setSyncStatus(state, text){
+  const dot = document.getElementById('syncDot');
+  dot.className = 'dot' + (state === 'off' ? ' off' : state === 'loading' ? ' loading' : '');
+  document.getElementById('syncText').textContent = text;
+}
+
+async function initApp(){
+  await loadMembers();
+  subscribeRealtime();
+}
+
+async function loadMembers(){
+  setSyncStatus('loading', 'در حال بارگذاری اطلاعات...');
+  const { data, error } = await sb.from(TABLE_NAME).select('*').eq('org_code', currentOrgCode).order('created_at', { ascending: true });
+  if(error){
+    console.error(error);
+    setSyncStatus('off', 'خطا در اتصال — اتصال اینترنت یا تنظیمات Supabase را بررسی کن');
+    return;
+  }
+  members = data || [];
+  setSyncStatus('on', 'متصل و همگام — تغییرات به‌صورت زنده برای اعضای همین سازمان دیده می‌شود');
+  populateLeaderFilters();
+  renderMembers();
+}
+
+function subscribeRealtime(){
+  if(realtimeChannel){ sb.removeChannel(realtimeChannel); }
+  realtimeChannel = sb.channel('members-live-' + currentOrgCode)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME, filter: 'org_code=eq.' + currentOrgCode }, () => {
+      loadMembers();
+    })
+    .subscribe();
+}
+
+async function saveMember(m, isNew){
+  const payload = { id: m.id, name: m.name, leader: m.leader, type: m.type, weeks: m.weeks, scores: m.scores, org_code: currentOrgCode };
+  const { error } = isNew
+    ? await sb.from(TABLE_NAME).insert([payload])
+    : await sb.from(TABLE_NAME).update(payload).eq('id', m.id).eq('org_code', currentOrgCode);
+  if(error){
+    console.error(error);
+    alert('ذخیره‌سازی با خطا مواجه شد. اتصال اینترنت و تنظیمات Supabase را بررسی کن.');
+    return false;
+  }
+  return true;
+}
+
+async function removeMemberRow(id){
+  const { error } = await sb.from(TABLE_NAME).delete().eq('id', id).eq('org_code', currentOrgCode);
+  if(error){
+    console.error(error);
+    alert('حذف با خطا مواجه شد.');
+  }
+}
+
+function populateLeaderFilters(){
+  const leaders = Array.from(new Set(members.map(m=>m.leader).filter(Boolean))).sort();
+  [document.getElementById('leaderFilter'), document.getElementById('reportLeaderFilter')].forEach(sel=>{
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="all">همه</option>' + leaders.map(l=>`<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+    if(leaders.includes(currentVal)) sel.value = currentVal;
+  });
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function weekProgress(m){
+  const weeks = m.weeks || {};
+  const done = Object.values(weeks).filter(Boolean).length;
+  return Math.round((done/12)*100);
+}
+
+async function addMember(){
+  const name = document.getElementById('inName').value.trim();
+  const leader = document.getElementById('inLeader').value.trim();
+  const type = document.getElementById('inType').value;
+  if(!name || !leader){
+    alert('لطفاً نام عضو و نام لیدر را وارد کنید.');
+    return;
+  }
+  const m = blankMember(name, leader, type);
+  document.getElementById('inName').value = '';
+  document.getElementById('inLeader').value = '';
+  const ok = await saveMember(m, true);
+  if(ok) await loadMembers();
+}
+
+function renderMembers(){
+  const filterVal = document.getElementById('leaderFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+  let list = members.slice();
+  if(filterVal !== 'all') list = list.filter(m=>m.leader===filterVal);
+
+  if(sortBy==='progress') list.sort((a,b)=> weekProgress(b)-weekProgress(a));
+  else if(sortBy==='name') list.sort((a,b)=> a.name.localeCompare(b.name,'fa'));
+  else if(sortBy==='leader') list.sort((a,b)=> (a.leader||'').localeCompare(b.leader||'','fa'));
+
+  const tbody = document.getElementById('memberTbody');
+  tbody.innerHTML = '';
+  document.getElementById('memberCount').textContent = list.length ? `(${toFa(list.length)} نفر)` : '';
+  document.getElementById('emptyState').style.display = list.length ? 'none' : 'block';
+
+  list.forEach(m=>{
+    const pct = weekProgress(m);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="member-name">${escapeHtml(m.name)}</td>
+      <td>${escapeHtml(m.leader)}</td>
+      <td><span class="tag ${m.type==='تازه‌وارد'?'new':''}">${escapeHtml(m.type)}</span></td>
+      <td>
+        <span class="progress-bar-outer"><span class="progress-bar-inner" style="width:${pct}%"></span></span>
+        <span class="progress-pct">${toFa(pct)}٪</span>
+      </td>
+      <td class="no-print"><button class="open-btn" onclick="openModal('${m.id}')">جزئیات و ثبت</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openModal(id){
+  currentModalId = id;
+  currentScoreTab = 'week1';
+  const m = members.find(x=>x.id===id);
+  if(!m) return;
+  document.getElementById('modalName').textContent = m.name;
+  document.getElementById('modalSub').textContent = `لیدر: ${m.leader} · سطح: ${m.type}`;
+  renderScoreTabs(m);
+  renderScoreGrid(m);
+  renderWeeksGrid(m);
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+  currentModalId = null;
+}
+
+function renderScoreTabs(m){
+  const wrap = document.getElementById('scoreTabs');
+  wrap.innerHTML = CHECKPOINTS.map(cp=>
+    `<div class="score-tab ${cp.key===currentScoreTab?'active':''}" onclick="switchScoreTab('${cp.key}')">${cp.label}</div>`
+  ).join('');
+}
+function switchScoreTab(key){
+  currentScoreTab = key;
+  const m = members.find(x=>x.id===currentModalId);
+  renderScoreTabs(m);
+  renderScoreGrid(m);
+}
+
+function renderScoreGrid(m){
+  const grid = document.getElementById('scoreGrid');
+  grid.innerHTML = SKILLS.map(s=>{
+    const val = (m.scores && m.scores[currentScoreTab] && m.scores[currentScoreTab][s]) || 0;
+    return `
+      <div class="score-row">
+        <span class="skill-name">${s}</span>
+        <input type="range" min="0" max="10" value="${val}" oninput="updateScoreLive('${s}', this.value, this.nextElementSibling)" onchange="updateScore('${s}', this.value)">
+        <span class="val">${toFa(val)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateScoreLive(skill, value, valEl){
+  valEl.textContent = toFa(value);
+}
+
+async function updateScore(skill, value){
+  const m = members.find(x=>x.id===currentModalId);
+  if(!m.scores) m.scores = {};
+  if(!m.scores[currentScoreTab]) m.scores[currentScoreTab] = {};
+  m.scores[currentScoreTab][skill] = Number(value);
+  await saveMember(m, false);
+}
+
+function renderWeeksGrid(m){
+  const grid = document.getElementById('weeksGrid');
+  grid.innerHTML = Array.from({length:12},(_,i)=>i+1).map(w=>{
+    const done = m.weeks ? m.weeks[w] : false;
+    return `
+      <div class="week-chip ${done?'done':''}" onclick="toggleWeek(${w})">
+        <span class="wk-num">هفتهٔ ${toFa(w)}</span>
+        <span class="wk-skill">${WEEK_SKILL[w]}</span>
+        <span class="wk-check"></span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleWeek(w){
+  const m = members.find(x=>x.id===currentModalId);
+  if(!m.weeks) m.weeks = {};
+  m.weeks[w] = !m.weeks[w];
+  await saveMember(m, false);
+  renderWeeksGrid(m);
+}
+
+async function deleteMember(){
+  if(!confirm('آیا از حذف این عضو مطمئن هستید؟ این کار قابل بازگشت نیست.')) return;
+  await removeMemberRow(currentModalId);
+  closeModal();
+  await loadMembers();
+}
+
+function toggleReportInputs(){
+  const type = document.getElementById('reportType').value;
+  document.getElementById('weekPickerWrap').style.display = type==='weekly' ? 'block':'none';
+  document.getElementById('monthPickerWrap').style.display = type==='monthly' ? 'block':'none';
+}
+
+function buildReport(){
+  const type = document.getElementById('reportType').value;
+  const leaderVal = document.getElementById('reportLeaderFilter').value;
+  let list = members.slice();
+  if(leaderVal !== 'all') list = list.filter(m=>m.leader===leaderVal);
+
+  const card = document.getElementById('reportCard');
+  card.style.display = 'block';
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('fa-IR');
+  const orgLabel = currentOrgName ? currentOrgName : currentOrgCode;
+
+  if(type === 'weekly'){
+    const week = Number(document.getElementById('weekPicker').value);
+    const title = `گزارش هفتگی — هفتهٔ ${toFa(week)} (محور: ${WEEK_SKILL[week]}) — ${orgLabel}`;
+    document.getElementById('reportTitle').textContent = title;
+    document.getElementById('reportTitleScreen').textContent = title;
+    document.getElementById('reportMeta').textContent = `تاریخ تهیهٔ گزارش: ${dateStr} · تعداد اعضا: ${toFa(list.length)} · فیلتر لیدر: ${leaderVal==='all'?'همه':leaderVal}`;
+
+    document.getElementById('reportThead').innerHTML = `<tr><th>نام</th><th>لیدر</th><th>سطح</th><th>وضعیت تکلیف این هفته</th></tr>`;
+    document.getElementById('reportTbody').innerHTML = list.map(m=>`
+      <tr>
+        <td class="member-name">${escapeHtml(m.name)}</td>
+        <td>${escapeHtml(m.leader)}</td>
+        <td>${escapeHtml(m.type)}</td>
+        <td>${(m.weeks && m.weeks[week]) ? '✔ انجام شده' : '○ انجام نشده'}</td>
+      </tr>
+    `).join('') || `<tr><td colspan="4" style="text-align:center;color:var(--muted);">عضوی یافت نشد</td></tr>`;
+
+  } else {
+    const month = Number(document.getElementById('monthPicker').value);
+    const ranges = {1:[1,4], 2:[5,8], 3:[9,12]};
+    const [start,end] = ranges[month];
+    const title = `گزارش ماهانه — ماه ${toFa(month)} (هفته‌های ${toFa(start)} تا ${toFa(end)}) — ${orgLabel}`;
+    document.getElementById('reportTitle').textContent = title;
+    document.getElementById('reportTitleScreen').textContent = title;
+    document.getElementById('reportMeta').textContent = `تاریخ تهیهٔ گزارش: ${dateStr} · تعداد اعضا: ${toFa(list.length)} · فیلتر لیدر: ${leaderVal==='all'?'همه':leaderVal}`;
+
+    document.getElementById('reportThead').innerHTML = `<tr><th>نام</th><th>لیدر</th><th>سطح</th><th>هفته‌های انجام‌شده</th><th>درصد تکمیل این ماه</th></tr>`;
+    document.getElementById('reportTbody').innerHTML = list.map(m=>{
+      let doneCount = 0, totalCount = 0;
+      for(let w=start; w<=end; w++){ totalCount++; if(m.weeks && m.weeks[w]) doneCount++; }
+      const pct = totalCount ? Math.round((doneCount/totalCount)*100) : 0;
+      return `
+        <tr>
+          <td class="member-name">${escapeHtml(m.name)}</td>
+          <td>${escapeHtml(m.leader)}</td>
+          <td>${escapeHtml(m.type)}</td>
+          <td>${toFa(doneCount)} از ${toFa(totalCount)}</td>
+          <td>${toFa(pct)}٪</td>
+        </tr>
+      `;
+    }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--muted);">عضوی یافت نشد</td></tr>`;
+  }
+
+  card.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+checkExistingOrg();
+</script>
+
+</body>
+</html>
