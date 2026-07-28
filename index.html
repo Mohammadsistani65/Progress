@@ -536,8 +536,9 @@
     <p style="font-size:12px;color:var(--muted);margin:4px 0 12px;">برای هر هفته، اقدامی که عضو انجام داده رو بنویسید. خالی‌بودن یعنی هنوز اقدامی ثبت نشده. عضو هم می‌تونه با لینک اختصاصی خودش همینا رو مستقیم ثبت کنه.</p>
     <div class="weeks-list" id="weeksList"></div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;">
       <button class="btn-danger" onclick="deleteMember()">حذف این عضو</button>
+      <button class="btn-ghost" onclick="resetMemberPin()">🔄 بازنشانی کد ۴ رقمی عضو</button>
       <button class="btn-primary" onclick="closeModal()">بستن</button>
     </div>
   </div>
@@ -874,6 +875,19 @@ async function updateWeekText(w, value){
   m.weeks[w] = value;
   await saveMember(m, false);
   renderMembers();
+}
+
+async function resetMemberPin(){
+  const m = members.find(x=>x.id===currentModalId);
+  if(!m) return;
+  if(!confirm(`کد ۴ رقمی «${m.name}» بازنشانی بشه؟ دفعهٔ بعد که وارد بشه، باید یک کد جدید انتخاب کنه.`)) return;
+  const { error } = await sb.from(TABLE_NAME).update({ pin: null }).eq('id', m.id).eq('org_code', currentOrgCode);
+  if(error){
+    alert('خطا در بازنشانی کد.');
+    return;
+  }
+  alert('کد بازنشانی شد. عضو دفعهٔ بعد که وارد بشه، یک کد جدید انتخاب می‌کنه.');
+  await loadMembers();
 }
 
 async function deleteMember(){
