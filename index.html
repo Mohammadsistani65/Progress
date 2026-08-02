@@ -327,6 +327,18 @@
   .pf-table input, .pf-table textarea{min-width:80px;font-size:12.5px;padding:6px 8px;}
   .pf-table th{background:var(--navy);color:#fff;text-align:center;}
   .pf-table td{text-align:center;}
+  .pf-flag-group{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden;}
+  .pf-flag-group-head{
+    background:var(--navy);color:#fff;padding:9px 14px;font-weight:700;font-size:13.5px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .pf-flag-group-body{padding:10px;}
+  .pf-flag-entry-row{display:grid;grid-template-columns:1.3fr 1.3fr .8fr .8fr .8fr auto;gap:6px;margin-bottom:8px;align-items:center;}
+  .pf-flag-entry-row select, .pf-flag-entry-row input{font-size:12.5px;padding:7px 8px;min-width:unset;width:100%;}
+  .pf-remove-btn{background:#FBEAE8;color:var(--danger);border:none;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;}
+  .pf-add-entry-btn{background:var(--gold-light);color:#8A6A1F;border:none;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .pf-empty-entries{color:var(--muted);font-size:12px;text-align:center;padding:10px;}
+  .pf-col-labels{display:grid;grid-template-columns:1.3fr 1.3fr .8fr .8fr .8fr auto;gap:6px;margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;}
   .status-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
   .status-chip{
     flex:1;min-width:150px;border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;
@@ -595,7 +607,7 @@
 
   <div class="card no-print" style="border-color:var(--gold-light);background:#FFFDF7;">
     <div style="font-size:13px;color:var(--muted);line-height:1.9;">
-      📊 اینجا می‌تونید گزارش‌های آماری دوره‌ای استان/گروه خودتون رو ثبت کنید — آمار اعضا، پرچمداران، شاخص‌های عملکرد و وضعیت کلی. هر بار که ثبت کنید، یک نسخهٔ جدید ذخیره میشه تا بشه روند تغییرات رو در طول زمان مقایسه کرد.
+      📊 اینجا می‌تونید گزارش‌های آماری دوره‌ای استان/گروه خودتون رو ثبت کنید — آمار اعضا، پرچمداران و وضعیت کلی. هر بار که ثبت کنید، یک نسخهٔ جدید ذخیره میشه تا بشه روند تغییرات رو در طول زمان مقایسه کرد.
     </div>
   </div>
 
@@ -645,31 +657,23 @@
     <div class="row">
       <div><label>نام استان</label><input type="text" id="pfProvinceName" placeholder="مثلاً: اصفهان" /></div>
       <div><label>نام سرگروه</label><input type="text" id="pfLeaderName" placeholder="مثلاً: محمد سیستانی" /></div>
-      <div><label>تاریخ به‌روزرسانی</label><input type="text" id="pfUpdateDate" placeholder="مثلاً: ۱۴۰۴/۰۵/۱۲" /></div>
+    </div>
+    <div class="row">
+      <div>
+        <label>تاریخ به‌روزرسانی (تقویم شمسی)</label>
+        <div style="display:flex;gap:8px;">
+          <select id="pfDateDay"></select>
+          <select id="pfDateMonth"></select>
+          <select id="pfDateYear"></select>
+        </div>
+      </div>
     </div>
 
     <h3 class="pf-section-title">📊 آمار اعضا</h3>
     <div class="pf-stats-grid" id="pfMemberStatsGrid"></div>
 
     <h3 class="pf-section-title">🚩 آمار پرچمداران</h3>
-    <div class="report-table-wrap">
-      <table class="pf-table">
-        <thead>
-          <tr><th>سطح</th><th>نام پرچمدار</th><th>از مجموعه</th><th>مجموع</th><th>دستبند گرفته</th><th>دستبند نگرفته</th></tr>
-        </thead>
-        <tbody id="pfFlagTbody"></tbody>
-      </table>
-    </div>
-
-    <h3 class="pf-section-title">📈 شاخص‌های عملکرد</h3>
-    <div class="report-table-wrap">
-      <table class="pf-table">
-        <thead>
-          <tr><th>شاخص</th><th>وضعیت فعلی</th><th>هدف ماه</th><th>درصد تحقق</th></tr>
-        </thead>
-        <tbody id="pfKpiTbody"></tbody>
-      </table>
-    </div>
+    <div id="pfFlagGroups"></div>
 
     <h3 class="pf-section-title">🚦 وضعیت استان</h3>
     <div class="status-picker" id="pfStatusPicker"></div>
@@ -1216,7 +1220,12 @@ const MEMBER_STAT_FIELDS = [
   {key:'vipGold', label:'VIP طلایی', icon:'🥇'},
 ];
 const FLAG_LEVELS = ["پرچمدار شماره ۱","پرچمدار شماره ۲","پرچمدار شماره ۳","پرچمدار شماره ۴","پرچمدار شماره ۵","پرچمدار شماره ۶"];
-const KPI_LABELS = ["درصد فعال بودن اعضا","درصد VIP ها","درصد طلایی‌ها","درصد پرچمداران"];
+const FROM_GROUP_NAMES = [
+  "داود جعفری زاد","زهرا مسعودی فرد","حسین مسعودی فرد","پریسا جعفری زاد","فیروزه محمدی",
+  "رویا درگاهی","مریم نوری اقدم","کبری سیفی","حسین درست","لیلا جعفری",
+  "محمد سیستانی","میلاد شریفی","رویا حیدری","فرح جوادی"
+];
+const JALALI_MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 const STATUS_INFO = {
   excellent: { label: "عالی", desc: "عملکرد بسیار خوب — ادامه دهید", icon: "📈" },
   follow: { label: "نیاز به پیگیری", desc: "عملکرد متوسط — نیاز به بهبود", icon: "⚠️" },
@@ -1226,6 +1235,7 @@ const STATUS_INFO = {
 let provinceReports = [];
 let currentProvinceEditId = null;
 let currentPfStatus = '';
+let pfFlagData = []; // array of 6 arrays, each holding entry objects {name, fromGroup, got, not, total}
 
 function switchMainTab(tab){
   document.getElementById('tabMembersBtn').classList.toggle('active', tab==='members');
@@ -1234,16 +1244,55 @@ function switchMainTab(tab){
   document.getElementById('provinceView').style.display = tab==='province' ? 'block' : 'none';
 }
 
+function daysInJalaliMonth(monthIndex1to12){
+  if(monthIndex1to12 <= 6) return 31;
+  if(monthIndex1to12 <= 11) return 30;
+  return 29; // اسفند (تقریبی؛ سال کبیسه در نظر گرفته نشده)
+}
+
+function populateDatePickers(day, month, year){
+  const daySel = document.getElementById('pfDateDay');
+  const monthSel = document.getElementById('pfDateMonth');
+  const yearSel = document.getElementById('pfDateYear');
+
+  monthSel.innerHTML = JALALI_MONTHS.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+  const yearsList = [];
+  for(let y=1398; y<=1410; y++) yearsList.push(y);
+  yearSel.innerHTML = yearsList.map(y => `<option value="${y}">${toFa(y)}</option>`).join('');
+
+  const selMonth = month || 1;
+  const dayCount = daysInJalaliMonth(Number(selMonth));
+  daySel.innerHTML = Array.from({length:dayCount},(_,i)=>i+1).map(d => `<option value="${d}">${toFa(d)}</option>`).join('');
+
+  daySel.value = day || 1;
+  monthSel.value = selMonth;
+  yearSel.value = year || 1404;
+
+  monthSel.onchange = () => {
+    const dc = daysInJalaliMonth(Number(monthSel.value));
+    const curDay = Number(daySel.value);
+    daySel.innerHTML = Array.from({length:dc},(_,i)=>i+1).map(d => `<option value="${d}">${toFa(d)}</option>`).join('');
+    daySel.value = Math.min(curDay, dc);
+  };
+}
+
+function getDateFromPickers(){
+  const d = document.getElementById('pfDateDay').value;
+  const m = document.getElementById('pfDateMonth').value;
+  const y = document.getElementById('pfDateYear').value;
+  if(!d || !m || !y) return '';
+  return `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+}
+
 function blankProvinceForm(){
   const memberStats = {};
   MEMBER_STAT_FIELDS.forEach(f => memberStats[f.key] = '');
-  const flagBearers = FLAG_LEVELS.map(level => ({ level, name:'', fromGroup:'', total:'', gotBracelet:'', noBracelet:'' }));
-  const kpis = KPI_LABELS.map(label => ({ label, current:'', target:'', percent:'' }));
+  const flagBearers = FLAG_LEVELS.map(level => ({ level, entries: [] }));
   return {
     id: uid(), org_code: currentOrgCode,
     data: {
       provinceName:'', leaderName:'', updateDate:'',
-      memberStats, flagBearers, kpis,
+      memberStats, flagBearers,
       status:'', notes:''
     }
   };
@@ -1319,8 +1368,15 @@ function openProvinceForm(id){
 
   document.getElementById('pfProvinceName').value = d.provinceName || '';
   document.getElementById('pfLeaderName').value = d.leaderName || '';
-  document.getElementById('pfUpdateDate').value = d.updateDate || '';
   document.getElementById('pfNotes').value = d.notes || '';
+
+  // Jalali date pickers
+  let dd='', mm='', yy='';
+  if(d.updateDate){
+    const parts = String(d.updateDate).split('/');
+    if(parts.length===3){ yy=Number(parts[0]); mm=Number(parts[1]); dd=Number(parts[2]); }
+  }
+  populateDatePickers(dd, mm, yy);
 
   // Member stats grid
   document.getElementById('pfMemberStatsGrid').innerHTML = MEMBER_STAT_FIELDS.map(f => `
@@ -1331,33 +1387,12 @@ function openProvinceForm(id){
     </div>
   `).join('');
 
-  // Flag bearers table
-  document.getElementById('pfFlagTbody').innerHTML = FLAG_LEVELS.map((level, i) => {
-    const row = (d.flagBearers && d.flagBearers[i]) || {};
-    return `
-      <tr>
-        <td style="font-weight:700;color:var(--navy);white-space:nowrap;">${level}</td>
-        <td><input type="text" id="pfFlagName_${i}" value="${escapeHtml(row.name||'')}" placeholder="نام" /></td>
-        <td><input type="text" id="pfFlagFrom_${i}" value="${escapeHtml(row.fromGroup||'')}" placeholder="از مجموعه" /></td>
-        <td><input type="text" inputmode="numeric" id="pfFlagTotal_${i}" value="${escapeHtml(String(row.total??''))}" placeholder="۰" /></td>
-        <td><input type="text" inputmode="numeric" id="pfFlagGot_${i}" value="${escapeHtml(String(row.gotBracelet??''))}" placeholder="۰" /></td>
-        <td><input type="text" inputmode="numeric" id="pfFlagNot_${i}" value="${escapeHtml(String(row.noBracelet??''))}" placeholder="۰" /></td>
-      </tr>
-    `;
-  }).join('');
-
-  // KPI table
-  document.getElementById('pfKpiTbody').innerHTML = KPI_LABELS.map((label, i) => {
-    const row = (d.kpis && d.kpis[i]) || {};
-    return `
-      <tr>
-        <td style="font-weight:700;color:var(--navy);white-space:nowrap;">${label}</td>
-        <td><input type="text" id="pfKpiCurrent_${i}" value="${escapeHtml(row.current||'')}" placeholder="وضعیت فعلی" /></td>
-        <td><input type="text" id="pfKpiTarget_${i}" value="${escapeHtml(row.target||'')}" placeholder="هدف ماه" /></td>
-        <td><input type="text" id="pfKpiPercent_${i}" value="${escapeHtml(row.percent||'')}" placeholder="٪" /></td>
-      </tr>
-    `;
-  }).join('');
+  // Flag bearers — multi-entry per level
+  pfFlagData = FLAG_LEVELS.map((level, i) => {
+    const existing = (d.flagBearers && d.flagBearers[i] && d.flagBearers[i].entries) || [];
+    return existing.map(e => ({ name:e.name||'', fromGroup:e.fromGroup||'', got:e.gotBracelet||'', not:e.noBracelet||'', total:e.total||'' }));
+  });
+  renderFlagGroups();
 
   // Status picker
   currentPfStatus = d.status || '';
@@ -1365,6 +1400,66 @@ function openProvinceForm(id){
 
   document.getElementById('provinceFormCard').style.display = 'block';
   document.getElementById('provinceFormCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function syncFlagDataFromDom(){
+  pfFlagData.forEach((entries, levelIdx) => {
+    entries.forEach((entry, entryIdx) => {
+      const nameEl = document.getElementById(`pfFlagName_${levelIdx}_${entryIdx}`);
+      if(!nameEl) return; // not rendered yet
+      entry.name = nameEl.value.trim();
+      entry.fromGroup = document.getElementById(`pfFlagFrom_${levelIdx}_${entryIdx}`).value.trim();
+      entry.got = document.getElementById(`pfFlagGot_${levelIdx}_${entryIdx}`).value.trim();
+      entry.not = document.getElementById(`pfFlagNot_${levelIdx}_${entryIdx}`).value.trim();
+      entry.total = document.getElementById(`pfFlagTotal_${levelIdx}_${entryIdx}`).value.trim();
+    });
+  });
+}
+
+function renderFlagGroups(){
+  const fromOptions = FROM_GROUP_NAMES.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+
+  document.getElementById('pfFlagGroups').innerHTML = FLAG_LEVELS.map((level, levelIdx) => {
+    const entries = pfFlagData[levelIdx] || [];
+    const rows = entries.length ? entries.map((e, entryIdx) => `
+      <div class="pf-flag-entry-row">
+        <input type="text" id="pfFlagName_${levelIdx}_${entryIdx}" value="${escapeHtml(e.name||'')}" placeholder="نام" />
+        <select id="pfFlagFrom_${levelIdx}_${entryIdx}">
+          <option value="">— انتخاب کنید —</option>
+          ${FROM_GROUP_NAMES.map(n => `<option value="${escapeHtml(n)}" ${e.fromGroup===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}
+        </select>
+        <input type="text" inputmode="numeric" id="pfFlagGot_${levelIdx}_${entryIdx}" value="${escapeHtml(String(e.got||''))}" placeholder="گرفته" />
+        <input type="text" inputmode="numeric" id="pfFlagNot_${levelIdx}_${entryIdx}" value="${escapeHtml(String(e.not||''))}" placeholder="نگرفته" />
+        <input type="text" inputmode="numeric" id="pfFlagTotal_${levelIdx}_${entryIdx}" value="${escapeHtml(String(e.total||''))}" placeholder="مجموع" />
+        <button class="pf-remove-btn" onclick="removeFlagEntry(${levelIdx}, ${entryIdx})">✕</button>
+      </div>
+    `).join('') : `<div class="pf-empty-entries">هنوز کسی برای این سطح اضافه نشده.</div>`;
+
+    return `
+      <div class="pf-flag-group">
+        <div class="pf-flag-group-head">
+          <span>${level}</span>
+          <button class="pf-add-entry-btn" onclick="addFlagEntry(${levelIdx})">➕ افزودن نفر جدید</button>
+        </div>
+        <div class="pf-flag-group-body">
+          ${entries.length ? `<div class="pf-col-labels"><span>نام</span><span>از مجموعه</span><span>گرفته</span><span>نگرفته</span><span>مجموع</span><span></span></div>` : ''}
+          ${rows}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addFlagEntry(levelIdx){
+  syncFlagDataFromDom();
+  pfFlagData[levelIdx].push({ name:'', fromGroup:'', got:'', not:'', total:'' });
+  renderFlagGroups();
+}
+
+function removeFlagEntry(levelIdx, entryIdx){
+  syncFlagDataFromDom();
+  pfFlagData[levelIdx].splice(entryIdx, 1);
+  renderFlagGroups();
 }
 
 function renderStatusPicker(){
@@ -1390,27 +1485,20 @@ async function saveProvinceForm(){
     memberStats[f.key] = document.getElementById('pfStat_' + f.key).value.trim();
   });
 
+  syncFlagDataFromDom();
   const flagBearers = FLAG_LEVELS.map((level, i) => ({
     level,
-    name: document.getElementById('pfFlagName_' + i).value.trim(),
-    fromGroup: document.getElementById('pfFlagFrom_' + i).value.trim(),
-    total: document.getElementById('pfFlagTotal_' + i).value.trim(),
-    gotBracelet: document.getElementById('pfFlagGot_' + i).value.trim(),
-    noBracelet: document.getElementById('pfFlagNot_' + i).value.trim(),
-  }));
-
-  const kpis = KPI_LABELS.map((label, i) => ({
-    label,
-    current: document.getElementById('pfKpiCurrent_' + i).value.trim(),
-    target: document.getElementById('pfKpiTarget_' + i).value.trim(),
-    percent: document.getElementById('pfKpiPercent_' + i).value.trim(),
+    entries: (pfFlagData[i]||[]).map(e => ({
+      name: e.name || '', fromGroup: e.fromGroup || '',
+      gotBracelet: e.got || '', noBracelet: e.not || '', total: e.total || ''
+    }))
   }));
 
   const data = {
     provinceName: document.getElementById('pfProvinceName').value.trim(),
     leaderName: document.getElementById('pfLeaderName').value.trim(),
-    updateDate: document.getElementById('pfUpdateDate').value.trim(),
-    memberStats, flagBearers, kpis,
+    updateDate: getDateFromPickers(),
+    memberStats, flagBearers,
     status: currentPfStatus,
     notes: document.getElementById('pfNotes').value.trim(),
   };
@@ -1458,25 +1546,26 @@ function exportProvincePDF(id){
     </div>
   `).join('');
 
-  const flagRows = (d.flagBearers||[]).map(row => `
-    <tr>
-      <td>${escapeHtml(row.level)}</td>
-      <td>${escapeHtml(row.name||'—')}</td>
-      <td>${escapeHtml(row.fromGroup||'—')}</td>
-      <td>${escapeHtml(String(row.total||'—'))}</td>
-      <td>${escapeHtml(String(row.gotBracelet||'—'))}</td>
-      <td>${escapeHtml(String(row.noBracelet||'—'))}</td>
-    </tr>
-  `).join('');
-
-  const kpiRows = (d.kpis||[]).map(row => `
-    <tr>
-      <td>${escapeHtml(row.label)}</td>
-      <td>${escapeHtml(row.current||'—')}</td>
-      <td>${escapeHtml(row.target||'—')}</td>
-      <td>${escapeHtml(row.percent||'—')}</td>
-    </tr>
-  `).join('');
+  const flagRows = [];
+  (d.flagBearers||[]).forEach(group => {
+    const entries = group.entries || [];
+    if(!entries.length){
+      flagRows.push(`<tr><td>${escapeHtml(group.level)}</td><td colspan="5" style="color:#999;">کسی ثبت نشده</td></tr>`);
+    } else {
+      entries.forEach((e, idx) => {
+        flagRows.push(`
+          <tr>
+            <td>${idx===0 ? escapeHtml(group.level) : ''}</td>
+            <td>${escapeHtml(e.name||'—')}</td>
+            <td>${escapeHtml(e.fromGroup||'—')}</td>
+            <td>${escapeHtml(String(e.gotBracelet||'—'))}</td>
+            <td>${escapeHtml(String(e.noBracelet||'—'))}</td>
+            <td>${escapeHtml(String(e.total||'—'))}</td>
+          </tr>
+        `);
+      });
+    }
+  });
 
   document.getElementById('provincePrintView').innerHTML = `
     <div class="prov-report">
@@ -1490,7 +1579,7 @@ function exportProvincePDF(id){
       <div class="prov-report-meta">
         <div><b>نام استان:</b> ${escapeHtml(d.provinceName || '—')}</div>
         <div><b>نام سرگروه:</b> ${escapeHtml(d.leaderName || '—')}</div>
-        <div><b>تاریخ به‌روزرسانی:</b> ${escapeHtml(d.updateDate || '—')}</div>
+        <div><b>تاریخ به‌روزرسانی:</b> ${escapeHtml(toFa(d.updateDate || '') || '—')}</div>
       </div>
 
       <div class="prov-section">
@@ -1501,16 +1590,8 @@ function exportProvincePDF(id){
       <div class="prov-section">
         <div class="prov-section-title">آمار پرچمداران</div>
         <table class="prov-table">
-          <thead><tr><th>سطح</th><th>نام پرچمدار</th><th>از مجموعه</th><th>مجموع</th><th>دستبند گرفته</th><th>دستبند نگرفته</th></tr></thead>
-          <tbody>${flagRows}</tbody>
-        </table>
-      </div>
-
-      <div class="prov-section">
-        <div class="prov-section-title">شاخص‌های عملکرد و وضعیت استان</div>
-        <table class="prov-table">
-          <thead><tr><th>شاخص</th><th>وضعیت فعلی</th><th>هدف ماه</th><th>درصد تحقق</th></tr></thead>
-          <tbody>${kpiRows}</tbody>
+          <thead><tr><th>سطح</th><th>نام</th><th>از مجموعه</th><th>دستبند گرفته</th><th>دستبند نگرفته</th><th>مجموع</th></tr></thead>
+          <tbody>${flagRows.join('')}</tbody>
         </table>
         ${st ? `<div style="text-align:center;margin-top:10px;"><span class="status-badge ${d.status}" style="font-size:14px;padding:8px 18px;">${st.icon} ${st.label} — ${st.desc}</span></div>` : ''}
       </div>
