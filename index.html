@@ -307,6 +307,75 @@
     text-align:center;color:var(--muted);font-size:12px;padding:20px;
   }
 
+  /* Main tabs */
+  .main-tabs{display:flex;gap:8px;margin-top:14px;}
+  .main-tab{
+    background:rgba(255,255,255,.1);color:#D9E3EE;padding:8px 18px;border-radius:20px;
+    font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);
+  }
+  .main-tab.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+
+  /* Province dashboard */
+  .pf-section-title{font-size:15px;color:var(--navy);margin:22px 0 10px;padding-right:10px;border-right:4px solid var(--gold);}
+  .pf-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:6px;}
+  .pf-stat-box{
+    border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:#FCFBF7;
+  }
+  .pf-stat-box .pf-icon{font-size:22px;margin-bottom:6px;}
+  .pf-stat-box label{font-size:11.5px;margin-bottom:6px;}
+  .pf-stat-box input{text-align:center;font-weight:800;font-size:16px;color:var(--navy);min-width:unset;}
+  .pf-table input, .pf-table textarea{min-width:80px;font-size:12.5px;padding:6px 8px;}
+  .pf-table th{background:var(--navy);color:#fff;text-align:center;}
+  .pf-table td{text-align:center;}
+  .status-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .status-chip{
+    flex:1;min-width:150px;border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;
+    cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);
+  }
+  .status-chip.excellent.active{border-color:#4C7A4E;background:#EAF4EA;color:#3E6B40;}
+  .status-chip.follow.active{border-color:#C79A3D;background:#FBF3DF;color:#8A6A1F;}
+  .status-chip.urgent.active{border-color:#B4483A;background:#FBEAE8;color:#8A2E23;}
+  .status-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .status-badge.excellent{background:#EAF4EA;color:#3E6B40;}
+  .status-badge.follow{background:#FBF3DF;color:#8A6A1F;}
+  .status-badge.urgent{background:#FBEAE8;color:#8A2E23;}
+
+  /* Printable province report card */
+  .prov-report{
+    background:#fff;border:2px solid var(--navy);border-radius:16px;overflow:hidden;font-family:'Vazirmatn',Tahoma,sans-serif;
+  }
+  .prov-report-head{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:18px 20px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  }
+  .prov-report-head h1{font-size:22px;margin:0;font-weight:800;}
+  .prov-report-head .sub{font-size:12px;color:#F4E7C9;margin-top:4px;}
+  .prov-report-meta{
+    display:flex;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap;
+  }
+  .prov-report-meta b{color:var(--navy);}
+  .prov-section{padding:16px 20px;}
+  .prov-section-title{
+    background:var(--navy);color:#fff;text-align:center;padding:8px;border-radius:10px;
+    font-size:14px;font-weight:700;margin-bottom:14px;
+  }
+  .prov-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px;}
+  .prov-stat-card{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;background:#FCFBF7;}
+  .prov-stat-card .n{font-size:20px;font-weight:800;color:var(--navy);}
+  .prov-stat-card .l{font-size:10.5px;color:var(--muted);margin-top:4px;}
+  .prov-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}
+  .prov-table th{background:var(--navy);color:#fff;padding:6px;font-size:11px;}
+  .prov-table td{border:1px solid var(--line);padding:6px;text-align:center;}
+  .prov-notes{border:1px dashed var(--line);border-radius:10px;padding:12px;font-size:12.5px;min-height:50px;}
+  .prov-footer{display:flex;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);}
+
+  @media print{
+    #provincePrintView{display:block !important;}
+  }
+  @media not print{
+    #provincePrintView{display:none;}
+  }
+
   @media print{
     .credit{position:static;background:none;border:none;text-align:left;margin-bottom:6px;}
     header.top, .no-print, nav, .card.controls-card{display:none !important;}
@@ -368,11 +437,15 @@
       <span style="opacity:.6;">کد: <b id="orgCodeLabel"></b></span>
       <button onclick="leaveOrg()">تغییر سازمان</button>
     </div>
+    <div class="main-tabs no-print" id="mainTabs" style="display:none;">
+      <div class="main-tab active" id="tabMembersBtn" onclick="switchMainTab('members')">پیشرفت اعضا</div>
+      <div class="main-tab" id="tabProvinceBtn" onclick="switchMainTab('province')">داشبورد آماری استان</div>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
-
+<div id="membersView">
   <div class="card no-print" id="noticeCard" style="border-color:var(--gold-light);background:#FFFDF7;">
     <div style="font-size:13px;color:var(--muted);line-height:1.9;">
       ⚠️ اعضایی که اینجا اضافه می‌کنی فقط برای کسانی قابل مشاهده‌ست که همین کد سازمان رو داشته باشن. اگه می‌خوای کمک‌لیدرهای خودت هم همین اطلاعات رو ببینن، کد سازمانت (بالای صفحه) رو به اونها بده.
@@ -516,6 +589,106 @@
   </div>
 
 </div>
+<!-- end membersView -->
+
+<div id="provinceView" style="display:none;">
+
+  <div class="card no-print" style="border-color:var(--gold-light);background:#FFFDF7;">
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+      📊 اینجا می‌تونید گزارش‌های آماری دوره‌ای استان/گروه خودتون رو ثبت کنید — آمار اعضا، پرچمداران، شاخص‌های عملکرد و وضعیت کلی. هر بار که ثبت کنید، یک نسخهٔ جدید ذخیره میشه تا بشه روند تغییرات رو در طول زمان مقایسه کرد.
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <span class="eyebrow">گزارش‌های ثبت‌شده</span>
+    <h2>فهرست داشبوردهای آماری <span id="provinceCount" style="color:var(--muted);font-weight:400;font-size:13px;"></span></h2>
+    <div class="row" style="margin-bottom:14px;">
+      <div>
+        <label>فیلتر بر اساس استان</label>
+        <select id="provinceFilterName" onchange="renderProvinceList()">
+          <option value="all">همه</option>
+        </select>
+      </div>
+      <div>
+        <label>فیلتر بر اساس سرگروه</label>
+        <select id="provinceFilterLeader" onchange="renderProvinceList()">
+          <option value="all">همه</option>
+        </select>
+      </div>
+      <div>
+        <label>فیلتر بر اساس وضعیت</label>
+        <select id="provinceFilterStatus" onchange="renderProvinceList()">
+          <option value="all">همه</option>
+          <option value="excellent">عالی</option>
+          <option value="follow">نیاز به پیگیری</option>
+          <option value="urgent">نیاز به اقدام فوری</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="openProvinceForm(null)">➕ افزودن گزارش آماری جدید</button>
+    </div>
+    <div class="report-table-wrap">
+      <table>
+        <thead>
+          <tr><th>استان</th><th>سرگروه</th><th>تاریخ به‌روزرسانی</th><th>وضعیت</th><th class="no-print"></th></tr>
+        </thead>
+        <tbody id="provinceTbody"></tbody>
+      </table>
+      <div class="empty" id="provinceEmptyState" style="display:none;">هنوز گزارش آماری‌ای ثبت نشده.</div>
+    </div>
+  </div>
+
+  <!-- Add/Edit form -->
+  <div class="card no-print" id="provinceFormCard" style="display:none;">
+    <span class="eyebrow" id="provinceFormEyebrow">گزارش جدید</span>
+    <h2>فرم داشبورد آماری استان</h2>
+
+    <div class="row">
+      <div><label>نام استان</label><input type="text" id="pfProvinceName" placeholder="مثلاً: اصفهان" /></div>
+      <div><label>نام سرگروه</label><input type="text" id="pfLeaderName" placeholder="مثلاً: محمد سیستانی" /></div>
+      <div><label>تاریخ به‌روزرسانی</label><input type="text" id="pfUpdateDate" placeholder="مثلاً: ۱۴۰۴/۰۵/۱۲" /></div>
+    </div>
+
+    <h3 class="pf-section-title">📊 آمار اعضا</h3>
+    <div class="pf-stats-grid" id="pfMemberStatsGrid"></div>
+
+    <h3 class="pf-section-title">🚩 آمار پرچمداران</h3>
+    <div class="report-table-wrap">
+      <table class="pf-table">
+        <thead>
+          <tr><th>سطح</th><th>نام پرچمدار</th><th>از مجموعه</th><th>مجموع</th><th>دستبند گرفته</th><th>دستبند نگرفته</th></tr>
+        </thead>
+        <tbody id="pfFlagTbody"></tbody>
+      </table>
+    </div>
+
+    <h3 class="pf-section-title">📈 شاخص‌های عملکرد</h3>
+    <div class="report-table-wrap">
+      <table class="pf-table">
+        <thead>
+          <tr><th>شاخص</th><th>وضعیت فعلی</th><th>هدف ماه</th><th>درصد تحقق</th></tr>
+        </thead>
+        <tbody id="pfKpiTbody"></tbody>
+      </table>
+    </div>
+
+    <h3 class="pf-section-title">🚦 وضعیت استان</h3>
+    <div class="status-picker" id="pfStatusPicker"></div>
+
+    <h3 class="pf-section-title">📝 توضیحات سرگروه</h3>
+    <textarea id="pfNotes" rows="3" placeholder="توضیحات یا نکات مهم..."></textarea>
+
+    <div class="row" style="margin-top:18px;">
+      <button class="btn-primary" onclick="saveProvinceForm()">💾 ذخیرهٔ گزارش</button>
+      <button class="btn-ghost" onclick="closeProvinceForm()">انصراف</button>
+    </div>
+  </div>
+
+  <!-- Printable province report (hidden on screen, shown when printing) -->
+  <div id="provincePrintView"></div>
+
+</div>
+<!-- end provinceView -->
+
 
 <footer class="foot no-print">داشبورد پیشرفت اعضا — برنامهٔ فصلی ارتقای مهارت‌های نتورکری</footer>
 
@@ -618,6 +791,7 @@ function setOrg(code, name, justCreated){
   localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify({code, name}));
   document.getElementById('gateOverlay').style.display = 'none';
   document.getElementById('orgBadge').style.display = 'inline-flex';
+  document.getElementById('mainTabs').style.display = 'flex';
   document.getElementById('orgCodeLabel').textContent = code;
   document.getElementById('orgNameLabel').textContent = name ? name : 'سازمان شما';
   if(justCreated){
@@ -632,6 +806,7 @@ function leaveOrg(){
   if(realtimeChannel){ sb.removeChannel(realtimeChannel); realtimeChannel = null; }
   members = [];
   document.getElementById('orgBadge').style.display = 'none';
+  document.getElementById('mainTabs').style.display = 'none';
   document.getElementById('gateOverlay').style.display = 'flex';
 }
 
@@ -670,6 +845,7 @@ function setSyncStatus(state, text){
 async function initApp(){
   await loadMembers();
   subscribeRealtime();
+  await loadProvinceReports();
 }
 
 async function loadMembers(){
@@ -1023,6 +1199,336 @@ function buildReport(){
   }
 
   card.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ============================================================
+   داشبورد آماری استان
+   ============================================================ */
+const PROVINCE_TABLE = "province_stats";
+const MEMBER_STAT_FIELDS = [
+  {key:'total', label:'کل اعضای کانال', icon:'👥'},
+  {key:'active', label:'اعضای فعال کانال', icon:'✅'},
+  {key:'supporters', label:'پشتیبانان', icon:'🤝'},
+  {key:'reps', label:'نماینده', icon:'⭐'},
+  {key:'independent', label:'مستقل', icon:'🚀'},
+  {key:'champions', label:'حامی', icon:'🛡️'},
+  {key:'vipSilver', label:'VIP نقره‌ای به بالا', icon:'🥈'},
+  {key:'vipGold', label:'VIP طلایی', icon:'🥇'},
+];
+const FLAG_LEVELS = ["پرچمدار شماره ۱","پرچمدار شماره ۲","پرچمدار شماره ۳","پرچمدار شماره ۴","پرچمدار شماره ۵","پرچمدار شماره ۶"];
+const KPI_LABELS = ["درصد فعال بودن اعضا","درصد VIP ها","درصد طلایی‌ها","درصد پرچمداران"];
+const STATUS_INFO = {
+  excellent: { label: "عالی", desc: "عملکرد بسیار خوب — ادامه دهید", icon: "📈" },
+  follow: { label: "نیاز به پیگیری", desc: "عملکرد متوسط — نیاز به بهبود", icon: "⚠️" },
+  urgent: { label: "نیاز به اقدام فوری", desc: "عملکرد ضعیف — اقدام سریع لازم است", icon: "🚨" },
+};
+
+let provinceReports = [];
+let currentProvinceEditId = null;
+let currentPfStatus = '';
+
+function switchMainTab(tab){
+  document.getElementById('tabMembersBtn').classList.toggle('active', tab==='members');
+  document.getElementById('tabProvinceBtn').classList.toggle('active', tab==='province');
+  document.getElementById('membersView').style.display = tab==='members' ? 'block' : 'none';
+  document.getElementById('provinceView').style.display = tab==='province' ? 'block' : 'none';
+}
+
+function blankProvinceForm(){
+  const memberStats = {};
+  MEMBER_STAT_FIELDS.forEach(f => memberStats[f.key] = '');
+  const flagBearers = FLAG_LEVELS.map(level => ({ level, name:'', fromGroup:'', total:'', gotBracelet:'', noBracelet:'' }));
+  const kpis = KPI_LABELS.map(label => ({ label, current:'', target:'', percent:'' }));
+  return {
+    id: uid(), org_code: currentOrgCode,
+    data: {
+      provinceName:'', leaderName:'', updateDate:'',
+      memberStats, flagBearers, kpis,
+      status:'', notes:''
+    }
+  };
+}
+
+async function loadProvinceReports(){
+  const { data, error } = await sb.from(PROVINCE_TABLE).select('*').eq('org_code', currentOrgCode).order('created_at', { ascending: false });
+  if(error){ console.error(error); provinceReports = []; return; }
+  provinceReports = data || [];
+  populateProvinceFilters();
+  renderProvinceList();
+}
+
+function populateProvinceFilters(){
+  const names = Array.from(new Set(provinceReports.map(r=>r.data.provinceName).filter(Boolean))).sort();
+  const leaders = Array.from(new Set(provinceReports.map(r=>r.data.leaderName).filter(Boolean))).sort();
+  const nameSel = document.getElementById('provinceFilterName');
+  const leaderSel = document.getElementById('provinceFilterLeader');
+  const curName = nameSel.value, curLeader = leaderSel.value;
+  nameSel.innerHTML = '<option value="all">همه</option>' + names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  leaderSel.innerHTML = '<option value="all">همه</option>' + leaders.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  if(names.includes(curName)) nameSel.value = curName;
+  if(leaders.includes(curLeader)) leaderSel.value = curLeader;
+}
+
+function renderProvinceList(){
+  const nameF = document.getElementById('provinceFilterName').value;
+  const leaderF = document.getElementById('provinceFilterLeader').value;
+  const statusF = document.getElementById('provinceFilterStatus').value;
+  let list = provinceReports.slice();
+  if(nameF !== 'all') list = list.filter(r => r.data.provinceName === nameF);
+  if(leaderF !== 'all') list = list.filter(r => r.data.leaderName === leaderF);
+  if(statusF !== 'all') list = list.filter(r => r.data.status === statusF);
+
+  const tbody = document.getElementById('provinceTbody');
+  document.getElementById('provinceCount').textContent = list.length ? `(${toFa(list.length)} گزارش)` : '';
+  document.getElementById('provinceEmptyState').style.display = list.length ? 'none' : 'block';
+
+  tbody.innerHTML = list.map(r => {
+    const d = r.data;
+    const st = STATUS_INFO[d.status];
+    return `
+      <tr>
+        <td class="member-name">${escapeHtml(d.provinceName || '—')}</td>
+        <td>${escapeHtml(d.leaderName || '—')}</td>
+        <td>${escapeHtml(d.updateDate || '—')}</td>
+        <td>${st ? `<span class="status-badge ${d.status}">${st.icon} ${st.label}</span>` : '—'}</td>
+        <td class="no-print" style="white-space:nowrap;">
+          <button class="open-btn" onclick="openProvinceForm('${r.id}')">ویرایش</button>
+          &nbsp;·&nbsp;
+          <button class="open-btn" onclick="exportProvincePDF('${r.id}')">خروجی PDF</button>
+          &nbsp;·&nbsp;
+          <button class="open-btn" style="color:var(--danger);" onclick="deleteProvinceReport('${r.id}')">حذف</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openProvinceForm(id){
+  let record;
+  if(id){
+    record = provinceReports.find(r => r.id === id);
+    if(!record) return;
+    currentProvinceEditId = id;
+    document.getElementById('provinceFormEyebrow').textContent = 'ویرایش گزارش';
+  } else {
+    record = blankProvinceForm();
+    currentProvinceEditId = null;
+    document.getElementById('provinceFormEyebrow').textContent = 'گزارش جدید';
+  }
+  const d = record.data;
+
+  document.getElementById('pfProvinceName').value = d.provinceName || '';
+  document.getElementById('pfLeaderName').value = d.leaderName || '';
+  document.getElementById('pfUpdateDate').value = d.updateDate || '';
+  document.getElementById('pfNotes').value = d.notes || '';
+
+  // Member stats grid
+  document.getElementById('pfMemberStatsGrid').innerHTML = MEMBER_STAT_FIELDS.map(f => `
+    <div class="pf-stat-box">
+      <div class="pf-icon">${f.icon}</div>
+      <label>${f.label}</label>
+      <input type="text" inputmode="numeric" id="pfStat_${f.key}" value="${escapeHtml(String(d.memberStats?.[f.key] ?? ''))}" placeholder="۰" />
+    </div>
+  `).join('');
+
+  // Flag bearers table
+  document.getElementById('pfFlagTbody').innerHTML = FLAG_LEVELS.map((level, i) => {
+    const row = (d.flagBearers && d.flagBearers[i]) || {};
+    return `
+      <tr>
+        <td style="font-weight:700;color:var(--navy);white-space:nowrap;">${level}</td>
+        <td><input type="text" id="pfFlagName_${i}" value="${escapeHtml(row.name||'')}" placeholder="نام" /></td>
+        <td><input type="text" id="pfFlagFrom_${i}" value="${escapeHtml(row.fromGroup||'')}" placeholder="از مجموعه" /></td>
+        <td><input type="text" inputmode="numeric" id="pfFlagTotal_${i}" value="${escapeHtml(String(row.total??''))}" placeholder="۰" /></td>
+        <td><input type="text" inputmode="numeric" id="pfFlagGot_${i}" value="${escapeHtml(String(row.gotBracelet??''))}" placeholder="۰" /></td>
+        <td><input type="text" inputmode="numeric" id="pfFlagNot_${i}" value="${escapeHtml(String(row.noBracelet??''))}" placeholder="۰" /></td>
+      </tr>
+    `;
+  }).join('');
+
+  // KPI table
+  document.getElementById('pfKpiTbody').innerHTML = KPI_LABELS.map((label, i) => {
+    const row = (d.kpis && d.kpis[i]) || {};
+    return `
+      <tr>
+        <td style="font-weight:700;color:var(--navy);white-space:nowrap;">${label}</td>
+        <td><input type="text" id="pfKpiCurrent_${i}" value="${escapeHtml(row.current||'')}" placeholder="وضعیت فعلی" /></td>
+        <td><input type="text" id="pfKpiTarget_${i}" value="${escapeHtml(row.target||'')}" placeholder="هدف ماه" /></td>
+        <td><input type="text" id="pfKpiPercent_${i}" value="${escapeHtml(row.percent||'')}" placeholder="٪" /></td>
+      </tr>
+    `;
+  }).join('');
+
+  // Status picker
+  currentPfStatus = d.status || '';
+  renderStatusPicker();
+
+  document.getElementById('provinceFormCard').style.display = 'block';
+  document.getElementById('provinceFormCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderStatusPicker(){
+  document.getElementById('pfStatusPicker').innerHTML = Object.keys(STATUS_INFO).map(key => {
+    const s = STATUS_INFO[key];
+    return `<div class="status-chip ${key} ${currentPfStatus===key?'active':''}" onclick="selectPfStatus('${key}')">${s.icon} ${s.label}</div>`;
+  }).join('');
+}
+
+function selectPfStatus(key){
+  currentPfStatus = currentPfStatus === key ? '' : key;
+  renderStatusPicker();
+}
+
+function closeProvinceForm(){
+  document.getElementById('provinceFormCard').style.display = 'none';
+  currentProvinceEditId = null;
+}
+
+async function saveProvinceForm(){
+  const memberStats = {};
+  MEMBER_STAT_FIELDS.forEach(f => {
+    memberStats[f.key] = document.getElementById('pfStat_' + f.key).value.trim();
+  });
+
+  const flagBearers = FLAG_LEVELS.map((level, i) => ({
+    level,
+    name: document.getElementById('pfFlagName_' + i).value.trim(),
+    fromGroup: document.getElementById('pfFlagFrom_' + i).value.trim(),
+    total: document.getElementById('pfFlagTotal_' + i).value.trim(),
+    gotBracelet: document.getElementById('pfFlagGot_' + i).value.trim(),
+    noBracelet: document.getElementById('pfFlagNot_' + i).value.trim(),
+  }));
+
+  const kpis = KPI_LABELS.map((label, i) => ({
+    label,
+    current: document.getElementById('pfKpiCurrent_' + i).value.trim(),
+    target: document.getElementById('pfKpiTarget_' + i).value.trim(),
+    percent: document.getElementById('pfKpiPercent_' + i).value.trim(),
+  }));
+
+  const data = {
+    provinceName: document.getElementById('pfProvinceName').value.trim(),
+    leaderName: document.getElementById('pfLeaderName').value.trim(),
+    updateDate: document.getElementById('pfUpdateDate').value.trim(),
+    memberStats, flagBearers, kpis,
+    status: currentPfStatus,
+    notes: document.getElementById('pfNotes').value.trim(),
+  };
+
+  if(!data.provinceName){
+    alert('لطفاً نام استان رو وارد کنید.');
+    return;
+  }
+
+  const id = currentProvinceEditId || uid();
+  const payload = { id, org_code: currentOrgCode, data };
+
+  const { error } = currentProvinceEditId
+    ? await sb.from(PROVINCE_TABLE).update(payload).eq('id', id).eq('org_code', currentOrgCode)
+    : await sb.from(PROVINCE_TABLE).insert([payload]);
+
+  if(error){
+    console.error(error);
+    alert('ذخیره‌سازی با خطا مواجه شد.');
+    return;
+  }
+
+  closeProvinceForm();
+  await loadProvinceReports();
+}
+
+async function deleteProvinceReport(id){
+  if(!confirm('این گزارش آماری حذف بشه؟ این کار قابل بازگشت نیست.')) return;
+  const { error } = await sb.from(PROVINCE_TABLE).delete().eq('id', id).eq('org_code', currentOrgCode);
+  if(error){ alert('حذف با خطا مواجه شد.'); return; }
+  await loadProvinceReports();
+}
+
+function exportProvincePDF(id){
+  const record = provinceReports.find(r => r.id === id);
+  if(!record) return;
+  const d = record.data;
+  const st = STATUS_INFO[d.status];
+  const today = new Date().toLocaleDateString('fa-IR');
+
+  const statCards = MEMBER_STAT_FIELDS.map(f => `
+    <div class="prov-stat-card">
+      <div class="n">${escapeHtml(String(d.memberStats?.[f.key] || '۰'))}</div>
+      <div class="l">${f.icon} ${f.label}</div>
+    </div>
+  `).join('');
+
+  const flagRows = (d.flagBearers||[]).map(row => `
+    <tr>
+      <td>${escapeHtml(row.level)}</td>
+      <td>${escapeHtml(row.name||'—')}</td>
+      <td>${escapeHtml(row.fromGroup||'—')}</td>
+      <td>${escapeHtml(String(row.total||'—'))}</td>
+      <td>${escapeHtml(String(row.gotBracelet||'—'))}</td>
+      <td>${escapeHtml(String(row.noBracelet||'—'))}</td>
+    </tr>
+  `).join('');
+
+  const kpiRows = (d.kpis||[]).map(row => `
+    <tr>
+      <td>${escapeHtml(row.label)}</td>
+      <td>${escapeHtml(row.current||'—')}</td>
+      <td>${escapeHtml(row.target||'—')}</td>
+      <td>${escapeHtml(row.percent||'—')}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('provincePrintView').innerHTML = `
+    <div class="prov-report">
+      <div class="prov-report-head">
+        <div>
+          <h1>داشبورد آماری استان</h1>
+          <div class="sub">${escapeHtml(d.provinceName || '')}</div>
+        </div>
+        <div class="sub">تاریخ چاپ: ${today}</div>
+      </div>
+      <div class="prov-report-meta">
+        <div><b>نام استان:</b> ${escapeHtml(d.provinceName || '—')}</div>
+        <div><b>نام سرگروه:</b> ${escapeHtml(d.leaderName || '—')}</div>
+        <div><b>تاریخ به‌روزرسانی:</b> ${escapeHtml(d.updateDate || '—')}</div>
+      </div>
+
+      <div class="prov-section">
+        <div class="prov-section-title">آمار اعضا</div>
+        <div class="prov-stat-grid">${statCards}</div>
+      </div>
+
+      <div class="prov-section">
+        <div class="prov-section-title">آمار پرچمداران</div>
+        <table class="prov-table">
+          <thead><tr><th>سطح</th><th>نام پرچمدار</th><th>از مجموعه</th><th>مجموع</th><th>دستبند گرفته</th><th>دستبند نگرفته</th></tr></thead>
+          <tbody>${flagRows}</tbody>
+        </table>
+      </div>
+
+      <div class="prov-section">
+        <div class="prov-section-title">شاخص‌های عملکرد و وضعیت استان</div>
+        <table class="prov-table">
+          <thead><tr><th>شاخص</th><th>وضعیت فعلی</th><th>هدف ماه</th><th>درصد تحقق</th></tr></thead>
+          <tbody>${kpiRows}</tbody>
+        </table>
+        ${st ? `<div style="text-align:center;margin-top:10px;"><span class="status-badge ${d.status}" style="font-size:14px;padding:8px 18px;">${st.icon} ${st.label} — ${st.desc}</span></div>` : ''}
+      </div>
+
+      <div class="prov-section">
+        <div class="prov-section-title">توضیحات سرگروه</div>
+        <div class="prov-notes">${d.notes ? escapeHtml(d.notes) : '—'}</div>
+      </div>
+
+      <div class="prov-footer">
+        <span>ثبت‌کننده: ${escapeHtml(d.leaderName || '—')}</span>
+        <span>سازمان: ${escapeHtml(currentOrgName || currentOrgCode)}</span>
+        <span>طراح: محمد سیستانی</span>
+      </div>
+    </div>
+  `;
+
+  window.print();
 }
 
 checkExistingOrg();
