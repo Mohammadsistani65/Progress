@@ -333,12 +333,20 @@
     display:flex;justify-content:space-between;align-items:center;
   }
   .pf-flag-group-body{padding:10px;}
-  .pf-flag-entry-row{display:grid;grid-template-columns:1.3fr 1.3fr .8fr .8fr .8fr auto;gap:6px;margin-bottom:8px;align-items:center;}
+  .pf-flag-entry-row{display:grid;grid-template-columns:1.4fr 1.4fr 1.1fr auto;gap:6px;margin-bottom:8px;align-items:center;}
   .pf-flag-entry-row select, .pf-flag-entry-row input{font-size:12.5px;padding:7px 8px;min-width:unset;width:100%;}
   .pf-remove-btn{background:#FBEAE8;color:var(--danger);border:none;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;}
   .pf-add-entry-btn{background:var(--gold-light);color:#8A6A1F;border:none;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;}
   .pf-empty-entries{color:var(--muted);font-size:12px;text-align:center;padding:10px;}
-  .pf-col-labels{display:grid;grid-template-columns:1.3fr 1.3fr .8fr .8fr .8fr auto;gap:6px;margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;}
+  .pf-col-labels{display:grid;grid-template-columns:1.4fr 1.4fr 1.1fr auto;gap:6px;margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;}
+  .pf-group-summary{
+    display:flex;gap:14px;flex-wrap:wrap;background:#F5F8FC;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:var(--navy-2);font-weight:600;
+  }
+  .pf-grand-summary{
+    display:flex;gap:14px;flex-wrap:wrap;background:var(--gold-light);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#8A6A1F;font-weight:700;
+  }
+  .pf-filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .pf-filter-bar select{min-width:160px;}
   .status-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
   .status-chip{
     flex:1;min-width:150px;border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;
@@ -1220,6 +1228,11 @@ const MEMBER_STAT_FIELDS = [
   {key:'vipGold', label:'VIP طلایی', icon:'🥇'},
 ];
 const FLAG_LEVELS = ["پرچمدار شماره ۱","پرچمدار شماره ۲","پرچمدار شماره ۳","پرچمدار شماره ۴","پرچمدار شماره ۵","پرچمدار شماره ۶"];
+const BRACELET_OPTIONS = [
+  {key:'yes', label:'بله'},
+  {key:'no', label:'خیر'},
+  {key:'upgraded', label:'ارتقاء یافته'},
+];
 const FROM_GROUP_NAMES = [
   "داود جعفری زاد","زهرا مسعودی فرد","حسین مسعودی فرد","پریسا جعفری زاد","فیروزه محمدی",
   "رویا درگاهی","مریم نوری اقدم","کبری سیفی","حسین درست","لیلا جعفری",
@@ -1390,7 +1403,7 @@ function openProvinceForm(id){
   // Flag bearers — multi-entry per level
   pfFlagData = FLAG_LEVELS.map((level, i) => {
     const existing = (d.flagBearers && d.flagBearers[i] && d.flagBearers[i].entries) || [];
-    return existing.map(e => ({ name:e.name||'', fromGroup:e.fromGroup||'', got:e.gotBracelet||'', not:e.noBracelet||'', total:e.total||'' }));
+    return existing.map(e => ({ name:e.name||'', fromGroup:e.fromGroup||'', bracelet:e.bracelet||'' }));
   });
   renderFlagGroups();
 
@@ -1406,34 +1419,83 @@ function syncFlagDataFromDom(){
   pfFlagData.forEach((entries, levelIdx) => {
     entries.forEach((entry, entryIdx) => {
       const nameEl = document.getElementById(`pfFlagName_${levelIdx}_${entryIdx}`);
-      if(!nameEl) return; // not rendered yet
+      if(!nameEl) return; // not rendered (filtered out or not yet rendered)
       entry.name = nameEl.value.trim();
       entry.fromGroup = document.getElementById(`pfFlagFrom_${levelIdx}_${entryIdx}`).value.trim();
-      entry.got = document.getElementById(`pfFlagGot_${levelIdx}_${entryIdx}`).value.trim();
-      entry.not = document.getElementById(`pfFlagNot_${levelIdx}_${entryIdx}`).value.trim();
-      entry.total = document.getElementById(`pfFlagTotal_${levelIdx}_${entryIdx}`).value.trim();
+      entry.bracelet = document.getElementById(`pfFlagBracelet_${levelIdx}_${entryIdx}`).value;
     });
   });
 }
 
-function renderFlagGroups(){
-  const fromOptions = FROM_GROUP_NAMES.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+function braceletLabel(key){
+  const found = BRACELET_OPTIONS.find(o => o.key === key);
+  return found ? found.label : '';
+}
 
-  document.getElementById('pfFlagGroups').innerHTML = FLAG_LEVELS.map((level, levelIdx) => {
-    const entries = pfFlagData[levelIdx] || [];
-    const rows = entries.length ? entries.map((e, entryIdx) => `
-      <div class="pf-flag-entry-row">
-        <input type="text" id="pfFlagName_${levelIdx}_${entryIdx}" value="${escapeHtml(e.name||'')}" placeholder="نام" />
-        <select id="pfFlagFrom_${levelIdx}_${entryIdx}">
-          <option value="">— انتخاب کنید —</option>
-          ${FROM_GROUP_NAMES.map(n => `<option value="${escapeHtml(n)}" ${e.fromGroup===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}
-        </select>
-        <input type="text" inputmode="numeric" id="pfFlagGot_${levelIdx}_${entryIdx}" value="${escapeHtml(String(e.got||''))}" placeholder="گرفته" />
-        <input type="text" inputmode="numeric" id="pfFlagNot_${levelIdx}_${entryIdx}" value="${escapeHtml(String(e.not||''))}" placeholder="نگرفته" />
-        <input type="text" inputmode="numeric" id="pfFlagTotal_${levelIdx}_${entryIdx}" value="${escapeHtml(String(e.total||''))}" placeholder="مجموع" />
-        <button class="pf-remove-btn" onclick="removeFlagEntry(${levelIdx}, ${entryIdx})">✕</button>
+function countBracelet(entries, key){
+  return entries.filter(e => e.bracelet === key).length;
+}
+
+function renderFlagGroups(){
+  const filterVal = document.getElementById('pfBraceletFilter') ? document.getElementById('pfBraceletFilter').value : 'all';
+
+  // Grand summary across all levels
+  let grandTotal = 0, grandYes = 0, grandNo = 0, grandUpg = 0;
+  pfFlagData.forEach(entries => {
+    grandTotal += entries.length;
+    grandYes += countBracelet(entries, 'yes');
+    grandNo += countBracelet(entries, 'no');
+    grandUpg += countBracelet(entries, 'upgraded');
+  });
+
+  const grandSummaryHtml = `
+    <div class="pf-grand-summary">
+      <span>👥 مجموع کل نفرات ثبت‌شده: ${toFa(grandTotal)}</span>
+      <span>✅ دستبند گرفته: ${toFa(grandYes)}</span>
+      <span>❌ دستبند نگرفته: ${toFa(grandNo)}</span>
+      <span>⬆️ ارتقاء یافته: ${toFa(grandUpg)}</span>
+    </div>
+    <div class="pf-filter-bar">
+      <label style="margin:0;">فیلتر نمایش بر اساس وضعیت دستبند:</label>
+      <select id="pfBraceletFilter" onchange="renderFlagGroups()">
+        <option value="all" ${filterVal==='all'?'selected':''}>همه</option>
+        ${BRACELET_OPTIONS.map(o => `<option value="${o.key}" ${filterVal===o.key?'selected':''}>${o.label}</option>`).join('')}
+      </select>
+    </div>
+  `;
+
+  const groupsHtml = FLAG_LEVELS.map((level, levelIdx) => {
+    const allEntries = pfFlagData[levelIdx] || [];
+    const visibleIndexes = allEntries
+      .map((e, i) => i)
+      .filter(i => filterVal === 'all' || allEntries[i].bracelet === filterVal);
+
+    const rows = visibleIndexes.length ? visibleIndexes.map(entryIdx => {
+      const e = allEntries[entryIdx];
+      return `
+        <div class="pf-flag-entry-row">
+          <input type="text" id="pfFlagName_${levelIdx}_${entryIdx}" value="${escapeHtml(e.name||'')}" placeholder="نام" />
+          <select id="pfFlagFrom_${levelIdx}_${entryIdx}">
+            <option value="">— انتخاب کنید —</option>
+            ${FROM_GROUP_NAMES.map(n => `<option value="${escapeHtml(n)}" ${e.fromGroup===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}
+          </select>
+          <select id="pfFlagBracelet_${levelIdx}_${entryIdx}">
+            <option value="">— انتخاب کنید —</option>
+            ${BRACELET_OPTIONS.map(o => `<option value="${o.key}" ${e.bracelet===o.key?'selected':''}>${o.label}</option>`).join('')}
+          </select>
+          <button class="pf-remove-btn" onclick="removeFlagEntry(${levelIdx}, ${entryIdx})">✕</button>
+        </div>
+      `;
+    }).join('') : `<div class="pf-empty-entries">${allEntries.length ? 'کسی با این فیلتر پیدا نشد.' : 'هنوز کسی برای این سطح اضافه نشده.'}</div>`;
+
+    const summary = `
+      <div class="pf-group-summary">
+        <span>مجموع: ${toFa(allEntries.length)}</span>
+        <span>✅ گرفته: ${toFa(countBracelet(allEntries,'yes'))}</span>
+        <span>❌ نگرفته: ${toFa(countBracelet(allEntries,'no'))}</span>
+        <span>⬆️ ارتقاء یافته: ${toFa(countBracelet(allEntries,'upgraded'))}</span>
       </div>
-    `).join('') : `<div class="pf-empty-entries">هنوز کسی برای این سطح اضافه نشده.</div>`;
+    `;
 
     return `
       <div class="pf-flag-group">
@@ -1442,17 +1504,20 @@ function renderFlagGroups(){
           <button class="pf-add-entry-btn" onclick="addFlagEntry(${levelIdx})">➕ افزودن نفر جدید</button>
         </div>
         <div class="pf-flag-group-body">
-          ${entries.length ? `<div class="pf-col-labels"><span>نام</span><span>از مجموعه</span><span>گرفته</span><span>نگرفته</span><span>مجموع</span><span></span></div>` : ''}
+          ${visibleIndexes.length ? `<div class="pf-col-labels"><span>نام</span><span>از مجموعه</span><span>وضعیت دستبند</span><span></span></div>` : ''}
           ${rows}
+          ${summary}
         </div>
       </div>
     `;
   }).join('');
+
+  document.getElementById('pfFlagGroups').innerHTML = grandSummaryHtml + groupsHtml;
 }
 
 function addFlagEntry(levelIdx){
   syncFlagDataFromDom();
-  pfFlagData[levelIdx].push({ name:'', fromGroup:'', got:'', not:'', total:'' });
+  pfFlagData[levelIdx].push({ name:'', fromGroup:'', bracelet:'' });
   renderFlagGroups();
 }
 
@@ -1490,7 +1555,7 @@ async function saveProvinceForm(){
     level,
     entries: (pfFlagData[i]||[]).map(e => ({
       name: e.name || '', fromGroup: e.fromGroup || '',
-      gotBracelet: e.got || '', noBracelet: e.not || '', total: e.total || ''
+      bracelet: e.bracelet || ''
     }))
   }));
 
@@ -1546,25 +1611,32 @@ function exportProvincePDF(id){
     </div>
   `).join('');
 
+  let grandTotal = 0, grandYes = 0, grandNo = 0, grandUpg = 0;
   const flagRows = [];
   (d.flagBearers||[]).forEach(group => {
     const entries = group.entries || [];
+    grandTotal += entries.length;
+    const yesC = entries.filter(e=>e.bracelet==='yes').length;
+    const noC = entries.filter(e=>e.bracelet==='no').length;
+    const upgC = entries.filter(e=>e.bracelet==='upgraded').length;
+    grandYes += yesC; grandNo += noC; grandUpg += upgC;
+
     if(!entries.length){
-      flagRows.push(`<tr><td>${escapeHtml(group.level)}</td><td colspan="5" style="color:#999;">کسی ثبت نشده</td></tr>`);
+      flagRows.push(`<tr><td>${escapeHtml(group.level)}</td><td colspan="3" style="color:#999;">کسی ثبت نشده</td></tr>`);
     } else {
       entries.forEach((e, idx) => {
+        const braceletTxt = e.bracelet==='yes' ? 'بله' : e.bracelet==='no' ? 'خیر' : e.bracelet==='upgraded' ? 'ارتقاء یافته' : '—';
         flagRows.push(`
           <tr>
             <td>${idx===0 ? escapeHtml(group.level) : ''}</td>
             <td>${escapeHtml(e.name||'—')}</td>
             <td>${escapeHtml(e.fromGroup||'—')}</td>
-            <td>${escapeHtml(String(e.gotBracelet||'—'))}</td>
-            <td>${escapeHtml(String(e.noBracelet||'—'))}</td>
-            <td>${escapeHtml(String(e.total||'—'))}</td>
+            <td>${braceletTxt}</td>
           </tr>
         `);
       });
     }
+    flagRows.push(`<tr style="background:#F5F8FC;font-weight:700;"><td colspan="4">جمع ${escapeHtml(group.level)}: ${toFa(entries.length)} نفر — بله: ${toFa(yesC)} · خیر: ${toFa(noC)} · ارتقاء یافته: ${toFa(upgC)}</td></tr>`);
   });
 
   document.getElementById('provincePrintView').innerHTML = `
@@ -1589,8 +1661,14 @@ function exportProvincePDF(id){
 
       <div class="prov-section">
         <div class="prov-section-title">آمار پرچمداران</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;background:#F4E7C9;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;font-weight:700;color:#8A6A1F;">
+          <span>👥 مجموع کل: ${toFa(grandTotal)} نفر</span>
+          <span>✅ بله: ${toFa(grandYes)}</span>
+          <span>❌ خیر: ${toFa(grandNo)}</span>
+          <span>⬆️ ارتقاء یافته: ${toFa(grandUpg)}</span>
+        </div>
         <table class="prov-table">
-          <thead><tr><th>سطح</th><th>نام</th><th>از مجموعه</th><th>دستبند گرفته</th><th>دستبند نگرفته</th><th>مجموع</th></tr></thead>
+          <thead><tr><th>سطح</th><th>نام</th><th>از مجموعه</th><th>وضعیت دستبند</th></tr></thead>
           <tbody>${flagRows.join('')}</tbody>
         </table>
         ${st ? `<div style="text-align:center;margin-top:10px;"><span class="status-badge ${d.status}" style="font-size:14px;padding:8px 18px;">${st.icon} ${st.label} — ${st.desc}</span></div>` : ''}
