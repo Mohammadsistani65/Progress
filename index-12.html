@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>داشبورد پیشرفت اعضا</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#1F3B57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="کارگروه ستاره دریایی‌ها">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --navy:#1F3B57; --navy-2:#2C557E; --gold:#C79A3D; --gold-light:#F4E7C9;
+    --cream:#FAF7F0; --line:#E3DCC9; --ink:#2A2A28; --muted:#7A7568;
+    --danger:#B4483A; --ok:#4C7A4E; --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Vazirmatn', Tahoma, sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+  .credit{position:fixed;top:10px;left:14px;font-size:11px;color:var(--muted);z-index:50;background:rgba(250,247,240,.9);padding:4px 10px;border-radius:20px;border:1px solid var(--line);}
+  header.top{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;padding:28px 20px 60px;position:relative;overflow:hidden;}
+  header.top::after{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(45deg, rgba(199,154,61,.06) 0 2px, transparent 2px 22px);pointer-events:none;}
+  .top-inner{max-width:1100px;margin:0 auto;position:relative;}
+  header.top h1{font-size:clamp(22px,4vw,32px);margin:6px 0 4px;font-weight:800;}
+  header.top p{margin:0;color:#D9E3EE;font-size:14px;max-width:640px;line-height:1.9;}
+  .sync-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#D9E3EE;margin-top:10px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#8FD19E;display:inline-block;}
+  .dot.off{background:#E0A0A0;} .dot.loading{background:#E0C77A;}
+  .org-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:6px 14px;border-radius:20px;font-size:12.5px;color:#F4E7C9;margin-top:12px;flex-wrap:wrap;}
+  .org-badge button{background:rgba(255,255,255,.15);color:#fff;border:none;padding:3px 10px;border-radius:14px;font-size:11px;cursor:pointer;font-weight:600;}
+  .org-badge button:hover{background:rgba(255,255,255,.25);}
+  .main-tabs{display:flex;gap:8px;margin-top:14px;}
+  .main-tab{background:rgba(255,255,255,.1);color:#D9E3EE;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.2);}
+  .main-tab.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .wrap{max-width:1100px;margin:-38px auto 60px;padding:0 16px;position:relative;}
+  .card{background:#fff;border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 6px 24px rgba(31,59,87,.07);padding:20px;margin-bottom:20px;}
+  .card h2{font-size:17px;margin:0 0 14px;color:var(--navy);display:flex;align-items:center;gap:8px;}
+  .eyebrow{display:inline-block;font-size:11px;font-weight:700;color:var(--gold);background:var(--gold-light);padding:3px 10px;border-radius:20px;margin-bottom:8px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+  input[type=text], select, textarea{font-family:inherit;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:#FCFBF7;font-size:14px;color:var(--ink);min-width:150px;}
+  textarea{width:100%;resize:vertical;min-height:44px;}
+  input[type=text]:focus, select:focus, textarea:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:9px;padding:9px 16px;font-size:13.5px;font-weight:700;transition:transform .12s ease, opacity .12s ease;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button:active{transform:scale(.97);}
+  .btn-primary{background:var(--navy);color:#fff;} .btn-primary:hover{background:var(--navy-2);}
+  .btn-gold{background:var(--gold);color:#fff;} .btn-gold:hover{opacity:.9;}
+  .btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--line);} .btn-ghost:hover{background:#F3F0E7;}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid #EAD6D2;font-weight:600;font-size:12px;padding:5px 10px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:right;font-size:12px;color:var(--muted);font-weight:700;padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap;}
+  td{padding:9px 10px;border-bottom:1px solid #F0ECE1;vertical-align:middle;}
+  tr:hover td{background:#FBF9F3;}
+  .member-name{font-weight:700;color:var(--ink);}
+  .tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;background:#EEF3F8;color:var(--navy-2);font-weight:600;white-space:nowrap;}
+  .progress-bar-outer{background:#EDE8DA;border-radius:20px;height:9px;width:100px;overflow:hidden;display:inline-block;vertical-align:middle;}
+  .progress-bar-inner{height:100%;background:linear-gradient(90deg,var(--gold),#DDB25E);border-radius:20px;}
+  .progress-pct{font-size:12px;color:var(--muted);margin-right:6px;}
+  .open-btn{background:none;border:none;color:var(--navy-2);font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;padding:0;}
+  .empty{text-align:center;color:var(--muted);padding:34px 10px;font-size:14px;}
+
+  .gate-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200;overflow-y:auto;}
+  .gate-card{background:#fff;border-radius:18px;max-width:460px;width:100%;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin:20px 0;}
+  .gate-card h2{color:var(--navy);font-size:19px;margin:0 0 6px;}
+  .gate-card p{color:var(--muted);font-size:13px;line-height:1.9;margin:0 0 20px;}
+  .gate-card input, .gate-card select{width:100%;margin-bottom:12px;font-size:15px;padding:11px 14px;}
+  .gate-hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.8;}
+  .gate-link{background:none;border:none;color:var(--navy-2);font-size:12.5px;text-decoration:underline;cursor:pointer;padding:0;margin-top:10px;display:block;text-align:center;width:100%;}
+  .pin-input{text-align:center;font-size:26px;letter-spacing:14px;font-weight:800;padding:14px;color:var(--navy);}
+  .pin-error{color:#fff;background:var(--danger);font-size:13px;margin-top:10px;text-align:center;padding:10px 12px;border-radius:9px;font-weight:700;display:none;}
+  .pin-error.show{display:block;}
+
+  .overlay{position:fixed;inset:0;background:rgba(20,25,20,.45);display:none;align-items:flex-start;justify-content:center;padding:30px 14px;overflow-y:auto;z-index:100;}
+  .overlay.show{display:flex;}
+  .modal{background:#fff;border-radius:16px;max-width:820px;width:100%;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .modal-close{position:absolute;top:16px;left:16px;background:#F3F0E7;border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;color:var(--muted);}
+  .modal h3{margin:0 0 4px;color:var(--navy);font-size:19px;} .modal .sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+  .weeks-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;max-height:520px;overflow-y:auto;padding-left:4px;}
+  .week-row{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFBF7;}
+  .week-row.done{border-color:#CFE6CF;background:#F6FBF6;}
+  .week-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .week-row-head .wk-label{font-weight:700;color:var(--navy);font-size:13px;}
+  .week-row textarea{font-size:13px;}
+  .score-block{margin-bottom:18px;}
+  .score-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .score-tab{border:1px solid var(--line);background:#FCFBF7;padding:6px 14px;border-radius:20px;font-size:12.5px;cursor:pointer;font-weight:600;color:var(--muted);}
+  .score-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .score-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+  .score-row{display:flex;align-items:center;gap:10px;justify-content:space-between;}
+  .score-row .skill-name{font-size:13.5px;font-weight:600;min-width:100px;}
+  .score-row input[type=range]{flex:1;accent-color:var(--gold);}
+  .score-row .val{min-width:26px;text-align:center;font-weight:700;color:var(--navy);font-size:13.5px;}
+
+  .report-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+  .report-table-wrap{overflow-x:auto;}
+  .report-header{display:none;}
+  .growth-card{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;background:#FCFBF7;}
+  .growth-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .growth-card-head .gname{font-weight:800;color:var(--navy);font-size:15px;}
+  .growth-card-head .gmeta{font-size:11.5px;color:var(--muted);}
+  .growth-overall{display:inline-flex;align-items:center;gap:6px;background:var(--gold-light);color:#8A6A1F;font-weight:800;font-size:13px;padding:4px 12px;border-radius:20px;}
+  .growth-skill-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px;}
+  .growth-skill-row .gs-name{min-width:92px;font-weight:600;color:var(--ink);}
+  .growth-bar-track{flex:1;height:14px;background:#EDE8DA;border-radius:8px;position:relative;overflow:hidden;}
+  .growth-bar-before{position:absolute;top:0;right:0;height:100%;background:#D8CFB8;border-radius:8px;}
+  .growth-bar-after{position:absolute;top:0;right:0;height:100%;background:linear-gradient(90deg,var(--gold),#DDB25E);border-radius:8px;}
+  .gs-nums{min-width:120px;text-align:left;font-size:11.5px;color:var(--muted);white-space:nowrap;}
+  .gs-nums b{color:var(--navy);}
+  footer.foot{text-align:center;color:var(--muted);font-size:12px;padding:20px;}
+
+  .cum-week-bar{display:flex;gap:2px;margin-top:8px;flex-wrap:wrap;}
+  .cum-week-seg{flex:1;min-width:18px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700;}
+  .cum-legend{font-size:10.5px;color:var(--muted);margin-top:8px;}
+
+  .pf-section-title{font-size:15px;color:var(--navy);margin:22px 0 10px;padding-right:10px;border-right:4px solid var(--gold);}
+  .pf-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:6px;}
+  .pf-stat-box{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:#FCFBF7;}
+  .pf-stat-box .pf-icon{font-size:22px;margin-bottom:6px;}
+  .pf-stat-box label{font-size:11.5px;margin-bottom:6px;}
+  .pf-stat-box input{text-align:center;font-weight:800;font-size:16px;color:var(--navy);min-width:unset;}
+  .pf-flag-group{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden;}
+  .pf-flag-group-head{background:var(--navy);color:#fff;padding:9px 14px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;}
+  .pf-flag-group-body{padding:10px;}
+  .pf-flag-entry-row{display:grid;grid-template-columns:1.4fr 1.4fr 1.1fr auto;gap:6px;margin-bottom:8px;align-items:center;}
+  .pf-flag-entry-row select, .pf-flag-entry-row input{font-size:12.5px;padding:7px 8px;min-width:unset;width:100%;}
+  .pf-remove-btn{background:#FBEAE8;color:var(--danger);border:none;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;}
+  .pf-add-entry-btn{background:var(--gold-light);color:#8A6A1F;border:none;border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .pf-empty-entries{color:var(--muted);font-size:12px;text-align:center;padding:10px;}
+  .pf-col-labels{display:grid;grid-template-columns:1.4fr 1.4fr 1.1fr auto;gap:6px;margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;}
+  .pf-group-summary{display:flex;gap:14px;flex-wrap:wrap;background:#F5F8FC;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:var(--navy-2);font-weight:600;}
+  .pf-grand-summary{display:flex;gap:14px;flex-wrap:wrap;background:var(--gold-light);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#8A6A1F;font-weight:700;}
+  .pf-filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .pf-filter-bar select{min-width:160px;}
+  .status-picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .status-chip{flex:1;min-width:150px;border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);}
+  .status-chip.excellent.active{border-color:#4C7A4E;background:#EAF4EA;color:#3E6B40;}
+  .status-chip.follow.active{border-color:#C79A3D;background:#FBF3DF;color:#8A6A1F;}
+  .status-chip.urgent.active{border-color:#B4483A;background:#FBEAE8;color:#8A2E23;}
+  .status-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .status-badge.excellent{background:#EAF4EA;color:#3E6B40;}
+  .status-badge.follow{background:#FBF3DF;color:#8A6A1F;}
+  .status-badge.urgent{background:#FBEAE8;color:#8A2E23;}
+
+  .prov-report{background:#fff;border:2px solid var(--navy);border-radius:16px;overflow:hidden;font-family:'Vazirmatn',Tahoma,sans-serif;}
+  .prov-report-head{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .prov-report-head h1{font-size:22px;margin:0;font-weight:800;}
+  .prov-report-head .sub{font-size:12px;color:#F4E7C9;margin-top:4px;}
+  .prov-report-meta{display:flex;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap;}
+  .prov-report-meta b{color:var(--navy);}
+  .prov-section{padding:16px 20px;}
+  .prov-section-title{background:var(--navy);color:#fff;text-align:center;padding:8px;border-radius:10px;font-size:14px;font-weight:700;margin-bottom:14px;}
+  .prov-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px;}
+  .prov-stat-card{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;background:#FCFBF7;}
+  .prov-stat-card .n{font-size:20px;font-weight:800;color:var(--navy);}
+  .prov-stat-card .l{font-size:10.5px;color:var(--muted);margin-top:4px;}
+  .prov-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}
+  .prov-table th{background:var(--navy);color:#fff;padding:6px;font-size:11px;}
+  .prov-table td{border:1px solid var(--line);padding:6px;text-align:center;}
+  .prov-notes{border:1px dashed var(--line);border-radius:10px;padding:12px;font-size:12.5px;min-height:50px;}
+  .prov-footer{display:flex;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);}
+
+  @media print{
+    .credit{position:static;background:none;border:none;text-align:left;margin-bottom:6px;}
+    header.top, .no-print, nav, .card.controls-card{display:none !important;}
+    body{background:#fff;}
+    .wrap{margin-top:0;}
+    .report-header{display:block;margin-bottom:14px;}
+    .report-header h2{color:var(--navy);margin:0 0 2px;font-size:20px;}
+    .report-header .meta{font-size:12px;color:var(--muted);}
+    .card{box-shadow:none;border:1px solid #ccc;}
+    table{font-size:12px;}
+    .growth-card{break-inside:avoid;border:1px solid #ccc;}
+    #provincePrintView{display:block !important;}
+  }
+  @media not print{ #provincePrintView{display:none;} }
+  @media (max-width:640px){ .row{flex-direction:column;align-items:stretch;} input[type=text], select{width:100%;} .gs-nums{min-width:100px;} }
+</style>
+</head>
+<body>
+
+<div class="credit">طراح: محمد سیستانی</div>
+
+<div class="gate-overlay" id="gateOverlay"><div class="gate-card" id="gateCard"></div></div>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow" style="background:rgba(255,255,255,.15);color:#F4E7C9;">برنامهٔ سالانهٔ ارتقای مهارت</span>
+    <h1>داشبورد پیشرفت اعضا</h1>
+    <p>ثبت و پیگیری پیشرفت اعضای کارگروه شما در پنج مهارت دعوت، ارتباط‌سازی، فروش، پیگیری و رشد شخصیتی — هفته به هفته.</p>
+    <div class="sync-badge"><span class="dot loading" id="syncDot"></span><span id="syncText">در حال اتصال...</span></div>
+    <div class="org-badge" id="orgBadge" style="display:none;">
+      <span id="orgNameLabel"></span>
+      <span style="opacity:.6;">شناسه: <b id="orgCodeLabel"></b></span>
+      <button onclick="leaveOrg()">تغییر کارگروه</button>
+    </div>
+    <div class="main-tabs no-print" id="mainTabs" style="display:none;">
+      <div class="main-tab active" id="tabMembersBtn" onclick="switchMainTab('members')">پیشرفت اعضا</div>
+      <div class="main-tab" id="tabProvinceBtn" onclick="switchMainTab('province')">داشبورد آماری استان</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<div id="membersView">
+
+  <div class="card no-print" id="noticeCard" style="border-color:var(--gold-light);background:#FFFDF7;">
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+      ⚠️ اعضایی که اینجا اضافه می‌کنی فقط برای کسانی قابل مشاهده‌ست که همین کارگروه رو انتخاب و با کد ورودش وارد شده باشن.
+    </div>
+  </div>
+
+  <div class="card no-print" id="sharedLinkCard" style="border-color:var(--gold-light);">
+    <span class="eyebrow">لینک اعضا</span>
+    <h2>لینک ثبت اقدام اعضا</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.9;margin:0 0 12px;">این یک لینک مشترک برای همهٔ اعضای کارگروه شماست. همین یک لینک رو توی کانال یا گروه بفرستید؛ هر عضو با باز کردنش، اسم خودشو از لیست انتخاب می‌کنه، کد ۴ رقمی شخصیشو می‌سازه/وارد می‌کنه، و اقدامات هفتگی خودشو ثبت می‌کنه.</p>
+    <div class="row"><button class="btn-gold" onclick="copySharedMemberLink()">🔗 کپی لینک مشترک اعضا</button></div>
+  </div>
+
+  <div class="card controls-card no-print">
+    <span class="eyebrow">افزودن عضو جدید</span>
+    <h2>ثبت عضو در برنامه</h2>
+    <div class="row">
+      <div><label>نام عضو</label><input type="text" id="inName" placeholder="مثلاً: زهرا احمدی" /></div>
+      <div><label>نام مسئول پیگیری</label><input type="text" id="inLeader" placeholder="مثلاً: محمد سیستانی" /></div>
+      <div><label>اولین پویای بالاسر</label><input type="text" id="inUpline" placeholder="نام" /></div>
+      <div>
+        <label>سطح عضو</label>
+        <select id="inType">
+          <option value="تازه ورودی">تازه ورودی</option>
+          <option value="نماینده">نماینده</option>
+          <option value="نماینده مستقل">نماینده مستقل</option>
+          <option value="حامی نقره‌ای">حامی نقره‌ای</option>
+          <option value="حامی طلایی">حامی طلایی</option>
+          <option value="حامی پلاتینیوم">حامی پلاتینیوم</option>
+          <option value="حامی الماس">حامی الماس</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="addMember()" id="addBtn">افزودن عضو</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="eyebrow">فهرست اعضا</span>
+    <h2>پیشرفت اعضا <span id="memberCount" style="color:var(--muted);font-weight:400;font-size:13px;"></span></h2>
+    <div class="row no-print" style="margin-bottom:14px;">
+      <div><label>فیلتر بر اساس مسئول پیگیری</label><select id="leaderFilter" onchange="renderMembers()"><option value="all">همه</option></select></div>
+      <div>
+        <label>مرتب‌سازی</label>
+        <select id="sortBy" onchange="renderMembers()">
+          <option value="progress">بیشترین پیشرفت</option>
+          <option value="name">نام (الفبا)</option>
+          <option value="leader">مسئول پیگیری</option>
+        </select>
+      </div>
+    </div>
+    <div class="report-table-wrap">
+      <table id="memberTable">
+        <thead><tr><th>نام</th><th>مسئول پیگیری</th><th>اولین پویای بالاسر</th><th>سطح</th><th>پیشرفت هفته‌ها (از ۳۶)</th><th class="no-print"></th></tr></thead>
+        <tbody id="memberTbody"></tbody>
+      </table>
+      <div class="empty" id="emptyState" style="display:none;">هنوز عضوی ثبت نشده — از فرم بالا اولین عضو را اضافه کنید.</div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <span class="eyebrow">خروجی گزارش</span>
+    <h2>گزارش‌گیری</h2>
+    <div class="report-controls">
+      <div>
+        <label>نوع گزارش</label>
+        <select id="reportType" onchange="toggleReportInputs()">
+          <option value="weekly">گزارش یک هفتهٔ خاص</option>
+          <option value="growth">گزارش رشد (نموداری و درصدی)</option>
+          <option value="cumulative">خلاصهٔ گزارش تاکنون (روند از ابتدا)</option>
+        </select>
+      </div>
+      <div id="weekPickerWrap">
+        <label>هفته</label>
+        <select id="weekPicker"></select>
+      </div>
+      <div><label>مسئول پیگیری</label><select id="reportLeaderFilter"><option value="all">همه</option></select></div>
+      <button class="btn-gold" onclick="buildReport()">ساخت گزارش</button>
+      <button class="btn-ghost" onclick="window.print()">🖨️ چاپ / خروجی PDF</button>
+    </div>
+  </div>
+
+  <div class="card" id="reportCard" style="display:none;">
+    <div class="report-header"><h2 id="reportTitle"></h2><div class="meta" id="reportMeta"></div></div>
+    <h2 class="no-print" id="reportTitleScreen"></h2>
+    <div id="reportTableView" class="report-table-wrap">
+      <table id="reportTable"><thead id="reportThead"></thead><tbody id="reportTbody"></tbody></table>
+    </div>
+    <div id="reportGrowthView"></div>
+    <div id="reportCumulativeView"></div>
+  </div>
+
+</div>
+
+<div id="provinceView" style="display:none;">
+
+  <div class="card no-print" style="border-color:var(--gold-light);background:#FFFDF7;">
+    <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+      📊 اینجا می‌تونید گزارش‌های آماری دوره‌ای استان/گروه خودتون رو ثبت کنید. هر بار که ثبت کنید، یک نسخهٔ جدید ذخیره میشه.
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <span class="eyebrow">گزارش‌های ثبت‌شده</span>
+    <h2>فهرست داشبوردهای آماری <span id="provinceCount" style="color:var(--muted);font-weight:400;font-size:13px;"></span></h2>
+    <div class="row" style="margin-bottom:14px;">
+      <div><label>فیلتر بر اساس استان</label><select id="provinceFilterName" onchange="renderProvinceList()"><option value="all">همه</option></select></div>
+      <div><label>فیلتر بر اساس سرگروه</label><select id="provinceFilterLeader" onchange="renderProvinceList()"><option value="all">همه</option></select></div>
+      <div>
+        <label>فیلتر بر اساس وضعیت</label>
+        <select id="provinceFilterStatus" onchange="renderProvinceList()">
+          <option value="all">همه</option><option value="excellent">عالی</option>
+          <option value="follow">نیاز به پیگیری</option><option value="urgent">نیاز به اقدام فوری</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="openProvinceForm(null)">➕ افزودن گزارش آماری جدید</button>
+    </div>
+    <div class="report-table-wrap">
+      <table>
+        <thead><tr><th>استان</th><th>سرگروه</th><th>تاریخ به‌روزرسانی</th><th>وضعیت</th><th class="no-print"></th></tr></thead>
+        <tbody id="provinceTbody"></tbody>
+      </table>
+      <div class="empty" id="provinceEmptyState" style="display:none;">هنوز گزارش آماری‌ای ثبت نشده.</div>
+    </div>
+  </div>
+
+  <div class="card no-print" id="provinceFormCard" style="display:none;">
+    <span class="eyebrow" id="provinceFormEyebrow">گزارش جدید</span>
+    <h2>فرم داشبورد آماری استان</h2>
+    <div class="row">
+      <div><label>نام استان</label><input type="text" id="pfProvinceName" placeholder="مثلاً: اصفهان" /></div>
+      <div><label>نام سرگروه</label><input type="text" id="pfLeaderName" placeholder="مثلاً: محمد سیستانی" /></div>
+    </div>
+    <div class="row">
+      <div>
+        <label>تاریخ به‌روزرسانی (تقویم شمسی)</label>
+        <div style="display:flex;gap:8px;"><select id="pfDateDay"></select><select id="pfDateMonth"></select><select id="pfDateYear"></select></div>
+      </div>
+    </div>
+    <h3 class="pf-section-title">📊 آمار اعضا</h3>
+    <div class="pf-stats-grid" id="pfMemberStatsGrid"></div>
+    <h3 class="pf-section-title">🚩 آمار پرچمداران</h3>
+    <div id="pfFlagGroups"></div>
+    <h3 class="pf-section-title">🚦 وضعیت استان</h3>
+    <div class="status-picker" id="pfStatusPicker"></div>
+    <h3 class="pf-section-title">📝 توضیحات سرگروه</h3>
+    <textarea id="pfNotes" rows="3" placeholder="توضیحات یا نکات مهم..."></textarea>
+    <div class="row" style="margin-top:18px;">
+      <button class="btn-primary" onclick="saveProvinceForm()">💾 ذخیرهٔ گزارش</button>
+      <button class="btn-ghost" onclick="closeProvinceForm()">انصراف</button>
+    </div>
+  </div>
+
+  <div id="provincePrintView"></div>
+</div>
+
+</div>
+
+<footer class="foot no-print">داشبورد پیشرفت اعضا — برنامهٔ سالانهٔ ارتقای مهارت‌های نتورکری</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modalName"></h3>
+    <div class="sub" id="modalSub"></div>
+    <div class="score-block">
+      <strong style="font-size:14px;color:var(--navy);">خودارزیابی مهارت‌ها (۱ تا ۱۰)</strong>
+      <div class="score-tabs" id="scoreTabs"></div>
+      <div class="score-grid" id="scoreGrid"></div>
+    </div>
+    <strong style="font-size:14px;color:var(--navy);">اقدام هفتگی (۳۶ هفته)</strong>
+    <p style="font-size:12px;color:var(--muted);margin:4px 0 12px;">برای هر هفته، اقدامی که عضو انجام داده رو بنویسید.</p>
+    <div class="weeks-list" id="weeksList"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;">
+      <button class="btn-danger" onclick="deleteMember()">حذف این عضو</button>
+      <button class="btn-ghost" onclick="resetMemberPin()">🔄 بازنشانی کد ۴ رقمی عضو</button>
+      <button class="btn-primary" onclick="closeModal()">بستن</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://zbwywbzefebywrycfnhm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Ex0JEqp0gkvCW3oST84PBg_FExBZiyt";
+const TABLE_NAME = "members";
+const PROVINCE_TABLE = "province_stats";
+const WORKGROUP_TABLE = "workgroup_access";
+const MASTER_RESET_CODE = "SISTANI-MASTER-1965";
+const TOTAL_WEEKS = 36;
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const WORKGROUPS = [
+  {name:"کارگروه البرز", code:"البرز-1001"},
+  {name:"کارگروه تهران", code:"تهران-1002"},
+  {name:"کارگروه قزوین", code:"قزوین-1003"},
+  {name:"کارگروه زنجان", code:"زنجان-1004"},
+  {name:"کارگروه اردبیل", code:"اردبیل-1005"},
+  {name:"کارگروه تبریز و ارومیه", code:"تبریز-1006"},
+  {name:"کارگروه قم و کاشان", code:"کار-3064"},
+  {name:"کارگروه اصفهان", code:"اصف-7338"},
+  {name:"کارگروه مرکزی", code:"مرکزی-1009"},
+  {name:"کارگروه کرمان یزد و خراسان", code:"کرمان-1010"},
+  {name:"کارگروه همدان لرستان", code:"همدان-1011"},
+  {name:"کارگروه استانهای شمالی", code:"شمال-1012"},
+  {name:"کارگروه کرمانشاه و استان های غربی و جنوب", code:"غرب-1013"},
+];
+
+const SKILLS = ["دعوت","ارتباط‌سازی","فروش","پیگیری","رشد شخصیتی"];
+const CHECKPOINTS = [{key:"week1",label:"هفتهٔ ۱"},{key:"week6",label:"هفتهٔ ۶"},{key:"week12",label:"هفتهٔ ۱۲"}];
+const MEMBER_STAT_FIELDS = [
+  {key:'total', label:'کل اعضای کانال', icon:'👥'}, {key:'active', label:'اعضای فعال کانال', icon:'✅'},
+  {key:'supporters', label:'پشتیبانان', icon:'🤝'}, {key:'reps', label:'نماینده', icon:'⭐'},
+  {key:'independent', label:'مستقل', icon:'🚀'}, {key:'champions', label:'حامی', icon:'🛡️'},
+  {key:'vipSilver', label:'VIP نقره‌ای به بالا', icon:'🥈'}, {key:'vipGold', label:'VIP طلایی', icon:'🥇'},
+];
+const FLAG_LEVELS = ["پرچمدار شماره ۱","پرچمدار شماره ۲","پرچمدار شماره ۳","پرچمدار شماره ۴","پرچمدار شماره ۵","پرچمدار شماره ۶"];
+const BRACELET_OPTIONS = [{key:'yes',label:'بله'},{key:'no',label:'خیر'},{key:'upgraded',label:'ارتقاء یافته'}];
+const FROM_GROUP_NAMES = [
+  "داود جعفری زاد","زهرا مسعودی فرد","حسین مسعودی فرد","پریسا جعفری زاد","فیروزه محمدی",
+  "رویا درگاهی","مریم نوری اقدم","کبری سیفی","حسین درست","لیلا جعفری",
+  "محمد سیستانی","میلاد شریفی","رویا حیدری","فرح جوادی"
+];
+const JALALI_MONTHS = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+const STATUS_INFO = {
+  excellent: { label: "عالی", desc: "عملکرد بسیار خوب — ادامه دهید", icon: "📈" },
+  follow: { label: "نیاز به پیگیری", desc: "عملکرد متوسط — نیاز به بهبود", icon: "⚠️" },
+  urgent: { label: "نیاز به اقدام فوری", desc: "عملکرد ضعیف — اقدام سریع لازم است", icon: "🚨" },
+};
+const ORG_STORAGE_KEY = "network_progress_workgroup";
+
+let members = [];
+let currentModalId = null;
+let currentScoreTab = "week1";
+let currentOrgCode = null;
+let currentOrgName = null;
+let realtimeChannel = null;
+let provinceReports = [];
+let currentProvinceEditId = null;
+let currentPfStatus = '';
+let pfFlagData = [];
+let pendingWorkgroup = null;
+
+function toFa(n){ const map={0:"۰",1:"۱",2:"۲",3:"۳",4:"۴",5:"۵",6:"۶",7:"۷",8:"۸",9:"۹"}; return String(n).split("").map(c=>map[c]!==undefined?map[c]:c).join(""); }
+function uid(){ return 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+function escapeHtml(str){ return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function weekLabel(w){ return "هفتهٔ " + toFa(w); }
+
+function renderWorkgroupPicker(){
+  document.getElementById('gateCard').innerHTML = `
+    <h2>به داشبورد پیشرفت اعضا خوش اومدی</h2>
+    <p>کارگروه خودتون رو از لیست انتخاب کنید تا وارد بشید.</p>
+    <label>کارگروه:</label>
+    <select id="workgroupPick"><option value="">— انتخاب کنید —</option>${WORKGROUPS.map((w,i) => `<option value="${i}">${escapeHtml(w.name)}</option>`).join('')}</select>
+    <button class="btn-primary" style="width:100%;" onclick="pickWorkgroup()">ادامه</button>
+  `;
+}
+
+async function pickWorkgroup(){
+  const idx = document.getElementById('workgroupPick').value;
+  if(idx === ''){ alert('لطفاً یک کارگروه انتخاب کنید.'); return; }
+  const wg = WORKGROUPS[Number(idx)];
+  pendingWorkgroup = wg;
+  document.getElementById('gateCard').innerHTML = `<p style="text-align:center;">در حال بررسی...</p>`;
+  const { data, error } = await sb.from(WORKGROUP_TABLE).select('*').eq('workgroup_code', wg.code).maybeSingle();
+  if(error){
+    document.getElementById('gateCard').innerHTML = `<p style="text-align:center;color:#B4483A;">خطا در اتصال.</p><button class="btn-ghost" style="width:100%;margin-top:10px;" onclick="renderWorkgroupPicker()">بازگشت</button>`;
+    return;
+  }
+  if(data && data.pin) renderEnterWorkgroupPin(); else renderSetWorkgroupPin(false);
+}
+
+function renderSetWorkgroupPin(isReset){
+  document.getElementById('gateCard').innerHTML = `
+    <h2>${escapeHtml(pendingWorkgroup.name)}</h2>
+    <p>${isReset ? 'یک کد ۴ رقمی جدید برای این کارگروه بسازید.' : 'شما اولین نفری هستید که وارد این کارگروه میشید. یک کد ۴ رقمی بسازید و با اعضای همون کارگروه به اشتراک بذارید.'}</p>
+    <label>کد ۴ رقمی جدید:</label><input type="password" inputmode="numeric" maxlength="4" id="wgPinNew" class="pin-input" placeholder="----" />
+    <label style="margin-top:8px;">تکرار کد:</label><input type="password" inputmode="numeric" maxlength="4" id="wgPinConfirm" class="pin-input" placeholder="----" />
+    <div class="pin-error" id="wgPinErr"></div>
+    <button class="btn-primary" style="width:100%;" onclick="submitSetWorkgroupPin()">ثبت کد و ورود</button>
+    <button class="gate-link" onclick="renderWorkgroupPicker()">بازگشت / انتخاب مجدد کارگروه</button>
+  `;
+}
+
+async function submitSetWorkgroupPin(){
+  const p1=document.getElementById('wgPinNew').value.trim(), p2=document.getElementById('wgPinConfirm').value.trim(), err=document.getElementById('wgPinErr');
+  if(!/^\d{4}$/.test(p1)){ err.textContent='❌ کد باید دقیقاً ۴ رقم باشه.'; err.classList.add('show'); return; }
+  if(p1!==p2){ err.textContent='❌ دو کد وارد شده یکسان نیستن.'; err.classList.add('show'); return; }
+  const { error } = await sb.from(WORKGROUP_TABLE).upsert({ workgroup_code: pendingWorkgroup.code, pin: p1 });
+  if(error){ err.textContent='❌ خطا در ذخیرهٔ کد.'; err.classList.add('show'); return; }
+  alert('کد ثبت شد!\nکارگروه: ' + pendingWorkgroup.name + '\nکد ورود: ' + p1);
+  setOrg(pendingWorkgroup.code, pendingWorkgroup.name);
+}
+
+function renderEnterWorkgroupPin(){
+  document.getElementById('gateCard').innerHTML = `
+    <h2>${escapeHtml(pendingWorkgroup.name)}</h2>
+    <p>کد ۴ رقمی این کارگروه رو وارد کنید.</p>
+    <input type="password" inputmode="numeric" maxlength="4" id="wgPinEnter" class="pin-input" placeholder="----" />
+    <div class="pin-error" id="wgPinErr"></div>
+    <button class="btn-primary" style="width:100%;" onclick="submitEnterWorkgroupPin()">ورود</button>
+    <button class="gate-link" onclick="renderMasterOverridePrompt()">کد رو فراموش کردید یا مدیر جدیدی هستید؟</button>
+    <button class="gate-link" onclick="renderWorkgroupPicker()">بازگشت / انتخاب مجدد کارگروه</button>
+  `;
+  const inp = document.getElementById('wgPinEnter'); inp.focus();
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter') submitEnterWorkgroupPin(); });
+}
+
+async function submitEnterWorkgroupPin(){
+  const val = document.getElementById('wgPinEnter').value.trim();
+  const err = document.getElementById('wgPinErr');
+  const { data } = await sb.from(WORKGROUP_TABLE).select('*').eq('workgroup_code', pendingWorkgroup.code).maybeSingle();
+  if(!data || val !== data.pin){
+    err.textContent = '❌ کد اشتباهه. دوباره امتحان کنید.'; err.classList.add('show');
+    document.getElementById('wgPinEnter').value = ''; return;
+  }
+  setOrg(pendingWorkgroup.code, pendingWorkgroup.name);
+}
+
+function renderMasterOverridePrompt(){
+  document.getElementById('gateCard').innerHTML = `
+    <h2>بازنشانی کد کارگروه</h2>
+    <p>این بخش فقط برای مدیر کل برنامه‌ست. کد اصلی مدیریت رو وارد کنید.</p>
+    <input type="text" id="masterCodeInput" placeholder="کد اصلی مدیریت" />
+    <div class="pin-error" id="wgPinErr"></div>
+    <button class="btn-primary" style="width:100%;" onclick="submitMasterOverride()">تأیید</button>
+    <button class="gate-link" onclick="renderEnterWorkgroupPin()">انصراف</button>
+  `;
+}
+
+function submitMasterOverride(){
+  const val = document.getElementById('masterCodeInput').value.trim();
+  const err = document.getElementById('wgPinErr');
+  if(val !== MASTER_RESET_CODE){ err.textContent = '❌ کد اصلی اشتباهه.'; err.classList.add('show'); return; }
+  renderSetWorkgroupPin(true);
+}
+
+function setOrg(code, name){
+  currentOrgCode = code; currentOrgName = name;
+  localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify({code, name}));
+  document.getElementById('gateOverlay').style.display = 'none';
+  document.getElementById('orgBadge').style.display = 'inline-flex';
+  document.getElementById('mainTabs').style.display = 'flex';
+  document.getElementById('orgCodeLabel').textContent = code;
+  document.getElementById('orgNameLabel').textContent = name;
+  initApp();
+}
+
+function leaveOrg(){
+  if(!confirm('با تغییر کارگروه، از این کارگروه خارج میشی. ادامه بدم؟')) return;
+  localStorage.removeItem(ORG_STORAGE_KEY);
+  if(realtimeChannel){ sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+  members = [];
+  document.getElementById('orgBadge').style.display = 'none';
+  document.getElementById('mainTabs').style.display = 'none';
+  document.getElementById('gateOverlay').style.display = 'flex';
+  renderWorkgroupPicker();
+}
+
+function checkExistingOrg(){
+  try{
+    const raw = localStorage.getItem(ORG_STORAGE_KEY);
+    if(raw){ const parsed = JSON.parse(raw); if(parsed && parsed.code){ setOrg(parsed.code, parsed.name); return; } }
+  }catch(e){}
+  renderWorkgroupPicker();
+}
+
+function blankMember(name, leader, upline, type){
+  const weeks = {}; for(let i=1;i<=TOTAL_WEEKS;i++) weeks[i]="";
+  const scores = {}; CHECKPOINTS.forEach(cp=>{ scores[cp.key] = {}; SKILLS.forEach(s=> scores[cp.key][s] = 0); });
+  return { id: uid(), name, leader, upline, type, weeks, scores, org_code: currentOrgCode };
+}
+
+function setSyncStatus(state, text){
+  const dot = document.getElementById('syncDot');
+  dot.className = 'dot' + (state === 'off' ? ' off' : state === 'loading' ? ' loading' : '');
+  document.getElementById('syncText').textContent = text;
+}
+
+function populateWeekPicker(){
+  document.getElementById('weekPicker').innerHTML = Array.from({length:TOTAL_WEEKS},(_,i)=>i+1).map(w => `<option value="${w}">${weekLabel(w)}</option>`).join('');
+}
+
+async function initApp(){
+  populateWeekPicker();
+  await loadMembers();
+  subscribeRealtime();
+  await loadProvinceReports();
+}
+
+async function loadMembers(){
+  setSyncStatus('loading', 'در حال بارگذاری اطلاعات...');
+  const { data, error } = await sb.from(TABLE_NAME).select('*').eq('org_code', currentOrgCode).order('created_at', { ascending: true });
+  if(error){ console.error(error); setSyncStatus('off', 'خطا در اتصال'); return; }
+  members = data || [];
+  setSyncStatus('on', 'متصل و همگام');
+  populateLeaderFilters(); renderMembers();
+}
+
+function subscribeRealtime(){
+  if(realtimeChannel){ sb.removeChannel(realtimeChannel); }
+  realtimeChannel = sb.channel('members-live-' + currentOrgCode)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME, filter: 'org_code=eq.' + currentOrgCode }, () => { loadMembers(); })
+    .subscribe();
+}
+
+async function saveMember(m, isNew){
+  const payload = { id: m.id, name: m.name, leader: m.leader, upline: m.upline||'', type: m.type, weeks: m.weeks, scores: m.scores, org_code: currentOrgCode };
+  const { error } = isNew
+    ? await sb.from(TABLE_NAME).insert([payload])
+    : await sb.from(TABLE_NAME).update(payload).eq('id', m.id).eq('org_code', currentOrgCode);
+  if(error){ console.error(error); alert('ذخیره‌سازی با خطا مواجه شد.'); return false; }
+  return true;
+}
+
+async function removeMemberRow(id){
+  const { error } = await sb.from(TABLE_NAME).delete().eq('id', id).eq('org_code', currentOrgCode);
+  if(error){ alert('حذف با خطا مواجه شد.'); }
+}
+
+function populateLeaderFilters(){
+  const leaders = Array.from(new Set(members.map(m=>m.leader).filter(Boolean))).sort();
+  [document.getElementById('leaderFilter'), document.getElementById('reportLeaderFilter')].forEach(sel=>{
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="all">همه</option>' + leaders.map(l=>`<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+    if(leaders.includes(currentVal)) sel.value = currentVal;
+  });
+}
+
+function weekProgress(m){
+  const weeks = m.weeks || {};
+  const done = Object.values(weeks).filter(v => String(v||'').trim().length > 0).length;
+  return Math.round((done/TOTAL_WEEKS)*100);
+}
+
+async function addMember(){
+  const name = document.getElementById('inName').value.trim();
+  const leader = document.getElementById('inLeader').value.trim();
+  const upline = document.getElementById('inUpline').value.trim();
+  const type = document.getElementById('inType').value;
+  if(!name || !leader){ alert('لطفاً نام عضو و نام مسئول پیگیری را وارد کنید.'); return; }
+  const m = blankMember(name, leader, upline, type);
+  document.getElementById('inName').value=''; document.getElementById('inLeader').value=''; document.getElementById('inUpline').value='';
+  const ok = await saveMember(m, true);
+  if(ok) await loadMembers();
+}
+
+function renderMembers(){
+  const filterVal = document.getElementById('leaderFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+  let list = members.slice();
+  if(filterVal !== 'all') list = list.filter(m=>m.leader===filterVal);
+  if(sortBy==='progress') list.sort((a,b)=> weekProgress(b)-weekProgress(a));
+  else if(sortBy==='name') list.sort((a,b)=> a.name.localeCompare(b.name,'fa'));
+  else if(sortBy==='leader') list.sort((a,b)=> (a.leader||'').localeCompare(b.leader||'','fa'));
+
+  const tbody = document.getElementById('memberTbody');
+  tbody.innerHTML = '';
+  document.getElementById('memberCount').textContent = list.length ? `(${toFa(list.length)} نفر)` : '';
+  document.getElementById('emptyState').style.display = list.length ? 'none' : 'block';
+
+  list.forEach(m=>{
+    const pct = weekProgress(m);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="member-name">${escapeHtml(m.name)}</td>
+      <td>${escapeHtml(m.leader)}</td>
+      <td>${escapeHtml(m.upline||'—')}</td>
+      <td><span class="tag">${escapeHtml(m.type)}</span></td>
+      <td><span class="progress-bar-outer"><span class="progress-bar-inner" style="width:${pct}%"></span></span><span class="progress-pct">${toFa(pct)}٪</span></td>
+      <td class="no-print"><button class="open-btn" onclick="openModal('${m.id}')">جزئیات و ثبت</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openModal(id){
+  currentModalId = id; currentScoreTab = 'week1';
+  const m = members.find(x=>x.id===id); if(!m) return;
+  document.getElementById('modalName').textContent = m.name;
+  document.getElementById('modalSub').textContent = `مسئول پیگیری: ${m.leader} · اولین پویای بالاسر: ${m.upline||'—'} · سطح: ${m.type}`;
+  renderScoreTabs(m); renderScoreGrid(m); renderWeeksList(m);
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); currentModalId = null; }
+
+function copySharedMemberLink(){
+  const base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+  const link = base + 'member.html?org=' + encodeURIComponent(currentOrgCode);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>{ alert('لینک مشترک اعضا کپی شد:\n\n' + link); }).catch(()=>{ prompt('این لینک رو دستی کپی کن:', link); });
+  } else { prompt('این لینک رو دستی کپی کن:', link); }
+}
+
+function renderScoreTabs(m){
+  document.getElementById('scoreTabs').innerHTML = CHECKPOINTS.map(cp=>`<div class="score-tab ${cp.key===currentScoreTab?'active':''}" onclick="switchScoreTab('${cp.key}')">${cp.label}</div>`).join('');
+}
+function switchScoreTab(key){ currentScoreTab = key; const m = members.find(x=>x.id===currentModalId); renderScoreTabs(m); renderScoreGrid(m); }
+function renderScoreGrid(m){
+  document.getElementById('scoreGrid').innerHTML = SKILLS.map(s=>{
+    const val = (m.scores && m.scores[currentScoreTab] && m.scores[currentScoreTab][s]) || 0;
+    return `<div class="score-row"><span class="skill-name">${s}</span><input type="range" min="0" max="10" value="${val}" oninput="updateScoreLive('${s}', this.value, this.nextElementSibling)" onchange="updateScore('${s}', this.value)"><span class="val">${toFa(val)}</span></div>`;
+  }).join('');
+}
+function updateScoreLive(skill, value, valEl){ valEl.textContent = toFa(value); }
+async function updateScore(skill, value){
+  const m = members.find(x=>x.id===currentModalId);
+  if(!m.scores) m.scores = {}; if(!m.scores[currentScoreTab]) m.scores[currentScoreTab] = {};
+  m.scores[currentScoreTab][skill] = Number(value);
+  await saveMember(m, false);
+}
+
+function renderWeeksList(m){
+  document.getElementById('weeksList').innerHTML = Array.from({length:TOTAL_WEEKS},(_,i)=>i+1).map(w=>{
+    const text = (m.weeks && m.weeks[w]) ? m.weeks[w] : '';
+    const done = text.trim().length > 0;
+    return `<div class="week-row ${done?'done':''}">
+      <div class="week-row-head"><span class="wk-label">اقدام ${weekLabel(w)}:</span></div>
+      <textarea rows="2" placeholder="اقدام..." onchange="updateWeekText(${w}, this.value)">${escapeHtml(text)}</textarea>
+    </div>`;
+  }).join('');
+}
+async function updateWeekText(w, value){
+  const m = members.find(x=>x.id===currentModalId);
+  if(!m.weeks) m.weeks = {}; m.weeks[w] = value;
+  await saveMember(m, false); renderMembers();
+}
+
+async function deleteMember(){
+  if(!confirm('آیا از حذف این عضو مطمئن هستید؟')) return;
+  await removeMemberRow(currentModalId); closeModal(); await loadMembers();
+}
+
+async function resetMemberPin(){
+  const m = members.find(x=>x.id===currentModalId); if(!m) return;
+  if(!confirm(`کد ۴ رقمی «${m.name}» بازنشانی بشه؟`)) return;
+  const { error } = await sb.from(TABLE_NAME).update({ pin: null }).eq('id', m.id).eq('org_code', currentOrgCode);
+  if(error){ alert('خطا در بازنشانی کد.'); return; }
+  alert('کد بازنشانی شد.'); await loadMembers();
+}
+
+function toggleReportInputs(){
+  const type = document.getElementById('reportType').value;
+  document.getElementById('weekPickerWrap').style.display = type==='weekly' ? 'block':'none';
+}
+
+function buildReport(){
+  const type = document.getElementById('reportType').value;
+  const leaderVal = document.getElementById('reportLeaderFilter').value;
+  let list = members.slice();
+  if(leaderVal !== 'all') list = list.filter(m=>m.leader===leaderVal);
+  const card = document.getElementById('reportCard'); card.style.display = 'block';
+  const today = new Date().toLocaleDateString('fa-IR');
+  const orgLabel = currentOrgName ? currentOrgName : currentOrgCode;
+  const tableView = document.getElementById('reportTableView');
+  const growthView = document.getElementById('reportGrowthView');
+  const cumView = document.getElementById('reportCumulativeView');
+  tableView.style.display='none'; growthView.style.display='none'; growthView.innerHTML=''; cumView.style.display='none'; cumView.innerHTML='';
+
+  if(type === 'weekly'){
+    tableView.style.display = 'block';
+    const w = Number(document.getElementById('weekPicker').value);
+    const title = `گزارش ${weekLabel(w)} — ${orgLabel}`;
+    document.getElementById('reportTitle').textContent = title; document.getElementById('reportTitleScreen').textContent = title;
+    document.getElementById('reportMeta').textContent = `تاریخ: ${today} · تعداد اعضا: ${toFa(list.length)}`;
+    document.getElementById('reportThead').innerHTML = `<tr><th>نام</th><th>مسئول پیگیری</th><th>سطح</th><th>اقدام این هفته</th></tr>`;
+    document.getElementById('reportTbody').innerHTML = list.map(m=>{
+      const text = (m.weeks && m.weeks[w]) ? m.weeks[w] : '';
+      return `<tr><td class="member-name">${escapeHtml(m.name)}</td><td>${escapeHtml(m.leader)}</td><td>${escapeHtml(m.type)}</td><td>${text.trim() ? escapeHtml(text) : '<span style="color:var(--muted);">ثبت نشده</span>'}</td></tr>`;
+    }).join('') || `<tr><td colspan="4" style="text-align:center;color:var(--muted);">عضوی یافت نشد</td></tr>`;
+
+  } else if(type === 'growth'){
+    growthView.style.display = 'block';
+    const title = `گزارش رشد — ${orgLabel}`;
+    document.getElementById('reportTitle').textContent = title; document.getElementById('reportTitleScreen').textContent = title;
+    document.getElementById('reportMeta').textContent = `تاریخ: ${today} · تعداد اعضا: ${toFa(list.length)}`;
+    growthView.innerHTML = list.length ? list.map(m=>{
+      const before=(m.scores&&m.scores.week1)||{}, after=(m.scores&&m.scores.week12)||{};
+      let sumBefore=0,sumAfter=0;
+      const skillRows = SKILLS.map(s=>{
+        const b=Number(before[s]||0), a=Number(after[s]||0);
+        sumBefore+=b; sumAfter+=a;
+        const delta=a-b; const deltaStr=(delta>0?'+':'')+toFa(delta);
+        return `<div class="growth-skill-row"><span class="gs-name">${s}</span><div class="growth-bar-track"><div class="growth-bar-before" style="width:${(b/10)*100}%;"></div><div class="growth-bar-after" style="width:${(a/10)*100}%;"></div></div><span class="gs-nums">${toFa(b)} ← <b>${toFa(a)}</b> از ۱۰ (${deltaStr})</span></div>`;
+      }).join('');
+      const overallPct = Math.round(((sumAfter-sumBefore)/(SKILLS.length*10))*100);
+      return `<div class="growth-card"><div class="growth-card-head"><div><div class="gname">${escapeHtml(m.name)}</div><div class="gmeta">مسئول پیگیری: ${escapeHtml(m.leader)}</div></div><div class="growth-overall">رشد کلی: ${(overallPct>0?'+':'')+toFa(overallPct)}٪</div></div>${skillRows}</div>`;
+    }).join('') : `<div class="empty">عضوی یافت نشد</div>`;
+
+  } else {
+    cumView.style.display = 'block';
+    const title = `خلاصهٔ گزارش تاکنون — روند از ابتدا — ${orgLabel}`;
+    document.getElementById('reportTitle').textContent = title; document.getElementById('reportTitleScreen').textContent = title;
+    document.getElementById('reportMeta').textContent = `تاریخ: ${today} · تعداد اعضا: ${toFa(list.length)}`;
+    cumView.innerHTML = list.length ? list.map(m=>{
+      const weeks = m.weeks || {};
+      let totalDone=0;
+      const segs = Array.from({length:TOTAL_WEEKS},(_,i)=>i+1).map(w=>{
+        const filled = String(weeks[w]||'').trim().length > 0;
+        if(filled) totalDone++;
+        const bg = filled ? '#8A6A1F' : '#EDE8DA';
+        const txt = filled ? '#fff' : '#9C9484';
+        return `<div class="cum-week-seg" style="background:${bg};color:${txt};" title="${weekLabel(w)}: ${filled ? 'ثبت شده' : 'ثبت نشده'}">${toFa(w)}</div>`;
+      }).join('');
+      const overallPct = Math.round((totalDone/TOTAL_WEEKS)*100);
+      return `<div class="growth-card">
+        <div class="growth-card-head">
+          <div><div class="gname">${escapeHtml(m.name)}</div><div class="gmeta">مسئول پیگیری: ${escapeHtml(m.leader)} · ${toFa(totalDone)} از ${toFa(TOTAL_WEEKS)} هفته</div></div>
+          <div class="growth-overall">پیشرفت کلی: ${toFa(overallPct)}٪</div>
+        </div>
+        <div class="cum-week-bar">${segs}</div>
+        <div class="cum-legend">هر مربع یک هفته؛ طلایی یعنی اقدام آن هفته ثبت شده.</div>
+      </div>`;
+    }).join('') : `<div class="empty">عضوی یافت نشد</div>`;
+  }
+
+  card.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function switchMainTab(tab){
+  document.getElementById('tabMembersBtn').classList.toggle('active', tab==='members');
+  document.getElementById('tabProvinceBtn').classList.toggle('active', tab==='province');
+  document.getElementById('membersView').style.display = tab==='members' ? 'block' : 'none';
+  document.getElementById('provinceView').style.display = tab==='province' ? 'block' : 'none';
+}
+
+function daysInJalaliMonth(m){ if(m<=6) return 31; if(m<=11) return 30; return 29; }
+function populateDatePickers(day, month, year){
+  const daySel=document.getElementById('pfDateDay'), monthSel=document.getElementById('pfDateMonth'), yearSel=document.getElementById('pfDateYear');
+  monthSel.innerHTML = JALALI_MONTHS.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+  const years=[]; for(let y=1398;y<=1410;y++) years.push(y);
+  yearSel.innerHTML = years.map(y => `<option value="${y}">${toFa(y)}</option>`).join('');
+  const selMonth = month || 1;
+  const dc = daysInJalaliMonth(Number(selMonth));
+  daySel.innerHTML = Array.from({length:dc},(_,i)=>i+1).map(d => `<option value="${d}">${toFa(d)}</option>`).join('');
+  daySel.value = day || 1; monthSel.value = selMonth; yearSel.value = year || 1404;
+  monthSel.onchange = () => {
+    const dc2 = daysInJalaliMonth(Number(monthSel.value)); const curDay = Number(daySel.value);
+    daySel.innerHTML = Array.from({length:dc2},(_,i)=>i+1).map(d => `<option value="${d}">${toFa(d)}</option>`).join('');
+    daySel.value = Math.min(curDay, dc2);
+  };
+}
+function getDateFromPickers(){
+  const d=document.getElementById('pfDateDay').value, m=document.getElementById('pfDateMonth').value, y=document.getElementById('pfDateYear').value;
+  if(!d||!m||!y) return '';
+  return `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+}
+
+function blankProvinceForm(){
+  const memberStats={}; MEMBER_STAT_FIELDS.forEach(f => memberStats[f.key] = '');
+  const flagBearers = FLAG_LEVELS.map(level => ({ level, entries: [] }));
+  return { id: uid(), org_code: currentOrgCode, data: { provinceName:'', leaderName:'', updateDate:'', memberStats, flagBearers, status:'', notes:'' } };
+}
+
+async function loadProvinceReports(){
+  const { data, error } = await sb.from(PROVINCE_TABLE).select('*').eq('org_code', currentOrgCode).order('created_at', { ascending: false });
+  if(error){ console.error(error); provinceReports = []; return; }
+  provinceReports = data || []; populateProvinceFilters(); renderProvinceList();
+}
+
+function populateProvinceFilters(){
+  const names = Array.from(new Set(provinceReports.map(r=>r.data.provinceName).filter(Boolean))).sort();
+  const leaders = Array.from(new Set(provinceReports.map(r=>r.data.leaderName).filter(Boolean))).sort();
+  const nameSel=document.getElementById('provinceFilterName'), leaderSel=document.getElementById('provinceFilterLeader');
+  const curName=nameSel.value, curLeader=leaderSel.value;
+  nameSel.innerHTML = '<option value="all">همه</option>' + names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  leaderSel.innerHTML = '<option value="all">همه</option>' + leaders.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  if(names.includes(curName)) nameSel.value=curName; if(leaders.includes(curLeader)) leaderSel.value=curLeader;
+}
+
+function renderProvinceList(){
+  const nameF=document.getElementById('provinceFilterName').value, leaderF=document.getElementById('provinceFilterLeader').value, statusF=document.getElementById('provinceFilterStatus').value;
+  let list = provinceReports.slice();
+  if(nameF!=='all') list=list.filter(r=>r.data.provinceName===nameF);
+  if(leaderF!=='all') list=list.filter(r=>r.data.leaderName===leaderF);
+  if(statusF!=='all') list=list.filter(r=>r.data.status===statusF);
+  const tbody = document.getElementById('provinceTbody');
+  document.getElementById('provinceCount').textContent = list.length ? `(${toFa(list.length)} گزارش)` : '';
+  document.getElementById('provinceEmptyState').style.display = list.length ? 'none' : 'block';
+  tbody.innerHTML = list.map(r=>{
+    const d=r.data, st=STATUS_INFO[d.status];
+    return `<tr><td class="member-name">${escapeHtml(d.provinceName||'—')}</td><td>${escapeHtml(d.leaderName||'—')}</td><td>${escapeHtml(d.updateDate||'—')}</td><td>${st?`<span class="status-badge ${d.status}">${st.icon} ${st.label}</span>`:'—'}</td><td class="no-print" style="white-space:nowrap;"><button class="open-btn" onclick="openProvinceForm('${r.id}')">ویرایش</button>&nbsp;·&nbsp;<button class="open-btn" onclick="exportProvincePDF('${r.id}')">خروجی PDF</button>&nbsp;·&nbsp;<button class="open-btn" style="color:var(--danger);" onclick="deleteProvinceReport('${r.id}')">حذف</button></td></tr>`;
+  }).join('');
+}
+
+function openProvinceForm(id){
+  let record;
+  if(id){ record=provinceReports.find(r=>r.id===id); if(!record) return; currentProvinceEditId=id; document.getElementById('provinceFormEyebrow').textContent='ویرایش گزارش'; }
+  else { record=blankProvinceForm(); currentProvinceEditId=null; document.getElementById('provinceFormEyebrow').textContent='گزارش جدید'; }
+  const d = record.data;
+  document.getElementById('pfProvinceName').value=d.provinceName||''; document.getElementById('pfLeaderName').value=d.leaderName||''; document.getElementById('pfNotes').value=d.notes||'';
+  let dd='',mm='',yy='';
+  if(d.updateDate){ const parts=String(d.updateDate).split('/'); if(parts.length===3){ yy=Number(parts[0]); mm=Number(parts[1]); dd=Number(parts[2]); } }
+  populateDatePickers(dd,mm,yy);
+  document.getElementById('pfMemberStatsGrid').innerHTML = MEMBER_STAT_FIELDS.map(f => `<div class="pf-stat-box"><div class="pf-icon">${f.icon}</div><label>${f.label}</label><input type="text" inputmode="numeric" id="pfStat_${f.key}" value="${escapeHtml(String(d.memberStats?.[f.key]??''))}" placeholder="۰" /></div>`).join('');
+  pfFlagData = FLAG_LEVELS.map((level,i) => {
+    const existing = (d.flagBearers && d.flagBearers[i] && d.flagBearers[i].entries) || [];
+    return existing.map(e => ({ name:e.name||'', fromGroup:e.fromGroup||'', bracelet:e.bracelet||'' }));
+  });
+  renderFlagGroups();
+  currentPfStatus = d.status || ''; renderStatusPicker();
+  document.getElementById('provinceFormCard').style.display = 'block';
+  document.getElementById('provinceFormCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function syncFlagDataFromDom(){
+  pfFlagData.forEach((entries, levelIdx) => {
+    entries.forEach((entry, entryIdx) => {
+      const nameEl = document.getElementById(`pfFlagName_${levelIdx}_${entryIdx}`);
+      if(!nameEl) return;
+      entry.name = nameEl.value.trim();
+      entry.fromGroup = document.getElementById(`pfFlagFrom_${levelIdx}_${entryIdx}`).value.trim();
+      entry.bracelet = document.getElementById(`pfFlagBracelet_${levelIdx}_${entryIdx}`).value;
+    });
+  });
+}
+function countBracelet(entries, key){ return entries.filter(e => e.bracelet === key).length; }
+
+function renderFlagGroups(){
+  const filterVal = document.getElementById('pfBraceletFilter') ? document.getElementById('pfBraceletFilter').value : 'all';
+  let grandTotal=0, grandYes=0, grandNo=0, grandUpg=0;
+  pfFlagData.forEach(entries => { grandTotal+=entries.length; grandYes+=countBracelet(entries,'yes'); grandNo+=countBracelet(entries,'no'); grandUpg+=countBracelet(entries,'upgraded'); });
+  const grandSummaryHtml = `
+    <div class="pf-grand-summary"><span>👥 مجموع کل: ${toFa(grandTotal)}</span><span>✅ گرفته: ${toFa(grandYes)}</span><span>❌ نگرفته: ${toFa(grandNo)}</span><span>⬆️ ارتقاء یافته: ${toFa(grandUpg)}</span></div>
+    <div class="pf-filter-bar"><label style="margin:0;">فیلتر نمایش:</label>
+      <select id="pfBraceletFilter" onchange="renderFlagGroups()">
+        <option value="all" ${filterVal==='all'?'selected':''}>همه</option>
+        ${BRACELET_OPTIONS.map(o => `<option value="${o.key}" ${filterVal===o.key?'selected':''}>${o.label}</option>`).join('')}
+      </select>
+    </div>`;
+  const groupsHtml = FLAG_LEVELS.map((level, levelIdx) => {
+    const allEntries = pfFlagData[levelIdx] || [];
+    const visIdx = allEntries.map((e,i)=>i).filter(i => filterVal==='all' || allEntries[i].bracelet===filterVal);
+    const rows = visIdx.length ? visIdx.map(entryIdx => {
+      const e = allEntries[entryIdx];
+      return `<div class="pf-flag-entry-row">
+        <input type="text" id="pfFlagName_${levelIdx}_${entryIdx}" value="${escapeHtml(e.name||'')}" placeholder="نام" />
+        <select id="pfFlagFrom_${levelIdx}_${entryIdx}"><option value="">— انتخاب کنید —</option>${FROM_GROUP_NAMES.map(n => `<option value="${escapeHtml(n)}" ${e.fromGroup===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}</select>
+        <select id="pfFlagBracelet_${levelIdx}_${entryIdx}"><option value="">— انتخاب کنید —</option>${BRACELET_OPTIONS.map(o => `<option value="${o.key}" ${e.bracelet===o.key?'selected':''}>${o.label}</option>`).join('')}</select>
+        <button class="pf-remove-btn" onclick="removeFlagEntry(${levelIdx}, ${entryIdx})">✕</button>
+      </div>`;
+    }).join('') : `<div class="pf-empty-entries">${allEntries.length ? 'کسی با این فیلتر پیدا نشد.' : 'هنوز کسی برای این سطح اضافه نشده.'}</div>`;
+    const summary = `<div class="pf-group-summary"><span>مجموع: ${toFa(allEntries.length)}</span><span>✅ گرفته: ${toFa(countBracelet(allEntries,'yes'))}</span><span>❌ نگرفته: ${toFa(countBracelet(allEntries,'no'))}</span><span>⬆️ ارتقاء یافته: ${toFa(countBracelet(allEntries,'upgraded'))}</span></div>`;
+    return `<div class="pf-flag-group"><div class="pf-flag-group-head"><span>${level}</span><button class="pf-add-entry-btn" onclick="addFlagEntry(${levelIdx})">➕ افزودن نفر جدید</button></div><div class="pf-flag-group-body">${visIdx.length ? `<div class="pf-col-labels"><span>نام</span><span>از مجموعه</span><span>وضعیت دستبند</span><span></span></div>` : ''}${rows}${summary}</div></div>`;
+  }).join('');
+  document.getElementById('pfFlagGroups').innerHTML = grandSummaryHtml + groupsHtml;
+}
+
+function addFlagEntry(levelIdx){ syncFlagDataFromDom(); pfFlagData[levelIdx].push({name:'',fromGroup:'',bracelet:''}); renderFlagGroups(); }
+function removeFlagEntry(levelIdx, entryIdx){ syncFlagDataFromDom(); pfFlagData[levelIdx].splice(entryIdx,1); renderFlagGroups(); }
+
+function renderStatusPicker(){
+  document.getElementById('pfStatusPicker').innerHTML = Object.keys(STATUS_INFO).map(key => {
+    const s = STATUS_INFO[key];
+    return `<div class="status-chip ${key} ${currentPfStatus===key?'active':''}" onclick="selectPfStatus('${key}')">${s.icon} ${s.label}</div>`;
+  }).join('');
+}
+function selectPfStatus(key){ currentPfStatus = currentPfStatus===key ? '' : key; renderStatusPicker(); }
+function closeProvinceForm(){ document.getElementById('provinceFormCard').style.display='none'; currentProvinceEditId=null; }
+
+async function saveProvinceForm(){
+  const memberStats={};
+  MEMBER_STAT_FIELDS.forEach(f => { memberStats[f.key] = document.getElementById('pfStat_'+f.key).value.trim(); });
+  syncFlagDataFromDom();
+  const flagBearers = FLAG_LEVELS.map((level,i) => ({ level, entries: (pfFlagData[i]||[]).map(e => ({ name:e.name||'', fromGroup:e.fromGroup||'', bracelet: e.bracelet || '' })) }));
+  const data = {
+    provinceName: document.getElementById('pfProvinceName').value.trim(),
+    leaderName: document.getElementById('pfLeaderName').value.trim(),
+    updateDate: getDateFromPickers(),
+    memberStats, flagBearers, status: currentPfStatus,
+    notes: document.getElementById('pfNotes').value.trim(),
+  };
+  if(!data.provinceName){ alert('لطفاً نام استان رو وارد کنید.'); return; }
+  const id = currentProvinceEditId || uid();
+  const payload = { id, org_code: currentOrgCode, data };
+  const { error } = currentProvinceEditId
+    ? await sb.from(PROVINCE_TABLE).update(payload).eq('id', id).eq('org_code', currentOrgCode)
+    : await sb.from(PROVINCE_TABLE).insert([payload]);
+  if(error){ console.error(error); alert('ذخیره‌سازی با خطا مواجه شد.'); return; }
+  closeProvinceForm(); await loadProvinceReports();
+}
+
+async function deleteProvinceReport(id){
+  if(!confirm('این گزارش آماری حذف بشه؟')) return;
+  const { error } = await sb.from(PROVINCE_TABLE).delete().eq('id', id).eq('org_code', currentOrgCode);
+  if(error){ alert('حذف با خطا مواجه شد.'); return; }
+  await loadProvinceReports();
+}
+
+function exportProvincePDF(id){
+  const record = provinceReports.find(r => r.id === id); if(!record) return;
+  const d = record.data, st = STATUS_INFO[d.status];
+  const today = new Date().toLocaleDateString('fa-IR');
+  const statCards = MEMBER_STAT_FIELDS.map(f => `<div class="prov-stat-card"><div class="n">${escapeHtml(String(d.memberStats?.[f.key]||'۰'))}</div><div class="l">${f.icon} ${f.label}</div></div>`).join('');
+  let grandTotal=0, grandYes=0, grandNo=0, grandUpg=0;
+  const flagRows = [];
+  (d.flagBearers||[]).forEach(group => {
+    const entries = group.entries || [];
+    grandTotal += entries.length;
+    const yesC=entries.filter(e=>e.bracelet==='yes').length, noC=entries.filter(e=>e.bracelet==='no').length, upgC=entries.filter(e=>e.bracelet==='upgraded').length;
+    grandYes+=yesC; grandNo+=noC; grandUpg+=upgC;
+    if(!entries.length){ flagRows.push(`<tr><td>${escapeHtml(group.level)}</td><td colspan="3" style="color:#999;">کسی ثبت نشده</td></tr>`); }
+    else{ entries.forEach((e,idx) => {
+      const braceletTxt = e.bracelet==='yes'?'بله':e.bracelet==='no'?'خیر':e.bracelet==='upgraded'?'ارتقاء یافته':'—';
+      flagRows.push(`<tr><td>${idx===0?escapeHtml(group.level):''}</td><td>${escapeHtml(e.name||'—')}</td><td>${escapeHtml(e.fromGroup||'—')}</td><td>${braceletTxt}</td></tr>`);
+    }); }
+    flagRows.push(`<tr style="background:#F5F8FC;font-weight:700;"><td colspan="4">جمع ${escapeHtml(group.level)}: ${toFa(entries.length)} نفر — بله: ${toFa(yesC)} · خیر: ${toFa(noC)} · ارتقاء یافته: ${toFa(upgC)}</td></tr>`);
+  });
+  document.getElementById('provincePrintView').innerHTML = `
+    <div class="prov-report">
+      <div class="prov-report-head"><div><h1>داشبورد آماری استان</h1><div class="sub">${escapeHtml(d.provinceName||'')}</div></div><div class="sub">تاریخ چاپ: ${today}</div></div>
+      <div class="prov-report-meta"><div><b>نام استان:</b> ${escapeHtml(d.provinceName||'—')}</div><div><b>نام سرگروه:</b> ${escapeHtml(d.leaderName||'—')}</div><div><b>تاریخ به‌روزرسانی:</b> ${escapeHtml(toFa(d.updateDate||'')||'—')}</div></div>
+      <div class="prov-section"><div class="prov-section-title">آمار اعضا</div><div class="prov-stat-grid">${statCards}</div></div>
+      <div class="prov-section">
+        <div class="prov-section-title">آمار پرچمداران</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;background:#F4E7C9;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;font-weight:700;color:#8A6A1F;">
+          <span>👥 مجموع کل: ${toFa(grandTotal)} نفر</span><span>✅ بله: ${toFa(grandYes)}</span><span>❌ خیر: ${toFa(grandNo)}</span><span>⬆️ ارتقاء یافته: ${toFa(grandUpg)}</span>
+        </div>
+        <table class="prov-table"><thead><tr><th>سطح</th><th>نام</th><th>از مجموعه</th><th>وضعیت دستبند</th></tr></thead><tbody>${flagRows.join('')}</tbody></table>
+        ${st ? `<div style="text-align:center;margin-top:10px;"><span class="status-badge ${d.status}" style="font-size:14px;padding:8px 18px;">${st.icon} ${st.label} — ${st.desc}</span></div>` : ''}
+      </div>
+      <div class="prov-section"><div class="prov-section-title">توضیحات سرگروه</div><div class="prov-notes">${d.notes ? escapeHtml(d.notes) : '—'}</div></div>
+      <div class="prov-footer"><span>ثبت‌کننده: ${escapeHtml(d.leaderName||'—')}</span><span>کارگروه: ${escapeHtml(currentOrgName||currentOrgCode)}</span><span>طراح: محمد سیستانی</span></div>
+    </div>
+  `;
+  window.print();
+}
+
+checkExistingOrg();
+</script>
+
+</body>
+</html>
